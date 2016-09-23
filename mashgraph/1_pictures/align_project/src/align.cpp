@@ -6,7 +6,7 @@
 #include <tgmath.h>
 
 #define PI 3.1415926535897932384626433832795
-#define EPS 0.000000000001 
+#define EPS 0.001 
 
 using std::vector;
 using std::tuple;
@@ -76,6 +76,22 @@ struct /*+++++*/
             return false;
     }
 } tuple_comp;
+
+struct elem /*+++++*/
+{
+    double bright;
+    uint num;
+
+    bool operator == (const elem &el)
+    {
+        return fabs(el.bright - bright) < EPS;
+    }
+};
+
+bool compare (const elem &el1, const elem &el2) /*+++++*/
+{
+    return el1.bright < el2.bright;
+}
 
 class UnaryMatrixOpMedian /*+++++*/
 {
@@ -283,19 +299,10 @@ Image align(Image srcImage, bool isPostprocessing, std::string postprocessingTyp
 
         if (postprocessingType == "--unsharp")
             srcImage = unsharp(srcImage);
-    }
 
-    /*rcImage = srcImage.submatrix(100, 100, srcImage.n_rows - 200, srcImage.n_cols - 200);
-    Image tmp_image(srcImage.n_rows + 800, srcImage.n_cols + 800);
-    tmp_image = mirroring(srcImage, 400);
-    srcImage = tmp_image;*/
-    
-    /*if (isMirror == true)
-    {
-        Image tmp_image(srcImage.n_rows + 2 * radius, srcImage.n_cols + 2 * radius);
-        tmp_image = mirroring(srcImage, radius);
-        srcImage = tmp_image.submatrix(radius, radius, src_image.n_rows, src_image.n_cols);
-    }*/
+        if (postprocessingType == "--autocontrast")
+            srcImage = autocontrast(srcImage, fraction);
+    }
 
     return srcImage;
 }
@@ -390,10 +397,69 @@ Image custom(Image src_image, Matrix<double> kernel) /*+++++*/
     return src_image;
 }
 
-Image autocontrast(Image src_image, double fraction)
+Image autocontrast(Image src_image, double fraction) /*+++++*/
 {
-    
-    
+    std::vector<elem> vec;
+    std::vector<elem>::iterator pos;
+    elem tmp_el;
+    double tmp1 = 0, tmp2 = 0, min = 0, max = 0;
+    uint r = 0, g = 0, b = 0;
+    uint cut = src_image.n_rows * src_image.n_cols * fraction;
+
+    for (uint i = 0; i < src_image.n_rows; i++)
+        for (uint j = 0; j < src_image.n_cols; j++)
+        {
+            tmp_el.num = 1;
+            tie(r, g, b) = src_image(i, j);
+            tmp_el.bright = 0.2125 * r + 0.7154 * g + 0.0721 * b;
+            if ((pos = find(vec.begin(), vec.end(), tmp_el)) != vec.end())
+                pos->num++;
+            else
+               vec.push_back(tmp_el); 
+        }
+    std::sort(vec.begin(), vec.end(), compare);
+
+    for (uint i = 0; i < vec.size(); i++)
+    {
+        tmp1 += vec[i].num;
+        tmp2 += vec[vec.size() - 1 - i].num;
+
+        if ((min < EPS) && (tmp1 > cut))
+            min = vec[i].bright;
+
+        if ((max < EPS) && (tmp2 > cut))
+            max = vec[vec.size() - 1 - i].bright;
+    }   
+
+    double consta = 255 / (max - min), nr = 0, ng = 0, nb = 0;
+    for (uint i = 0; i < src_image.n_rows; i++)
+        for (uint j = 0; j < src_image.n_cols; j++)
+        {
+            tie(r, g, b) = src_image(i, j);
+            tmp1 = 0.2125 * r + 0.7154 * g + 0.0721 * b;
+
+            nr = r * (1 - min / tmp1) * consta;
+            ng = g * (1 - min / tmp1) * consta;
+            nb = b * (1 - min / tmp1) * consta;
+
+            if (nr < 0)
+                nr = 0;
+            if (nr > 255)
+                nr = 255;
+
+            if (ng < 0)
+                ng = 0;
+            if (ng > 255)
+                ng = 255;
+
+            if (nb < 0)
+                nb = 0;
+            if (nb > 255)
+                nb = 255;
+
+            src_image(i, j) = make_tuple(static_cast<uint> (nr + 0.5), static_cast<uint> (ng + 0.5), static_cast<uint> (nb + 0.5));
+        }
+
     return src_image;
 }
 
@@ -415,8 +481,6 @@ Image gaussian(Image src_image, double sigma, int radius) /*+++++*/
     for (uint i = 0; i < gauss_kernel.n_rows; i++)
         for (uint j = 0; j < gauss_kernel.n_cols; j++)
             gauss_kernel(i, j) /= norm;
-
-    //cout << gauss_kernel << endl;
 
     return custom(src_image, gauss_kernel);
 }
@@ -612,7 +676,7 @@ Image canny(Image src_image, int threshold1, int threshold2) /*+++++*/
         }
 
     /*FIND BORDERS*/
-    for (uint i = 1; i < Ix.n_rows - 1; i++)
+    /*for (uint i = 1; i < Ix.n_rows - 1; i++)
         for (uint j = 1; j < Ix.n_cols - 1; j++)
             if (border_map(i, j) == 255)
             {
@@ -670,24 +734,58 @@ Image canny(Image src_image, int threshold1, int threshold2) /*+++++*/
                     border_map(i + 1, j + 1) = 255;
             }
             else
-                border_map(i, j) = 0;
+                border_map(i, j) = 0;*/
 
-    /*BORDERS*/
-    for (uint i = 0; i < border_map.n_rows; i++)
-        for (uint j = 0; j < border_map.n_cols; j++)
-            src_image(i, j) = std::tie(border_map(i, j),border_map(i, j),border_map(i, j));
+    std::vector<tuple<uint, uint>> white_points;
+    std::vector<tuple<uint, uint>> gray_points;
+    Matrix<uint> border_map_new(Ix.n_rows, Ix.n_cols);
+
+    for (uint i = 0; i < Ix.n_rows; i++)
+        for (uint j = 0; j < Ix.n_cols; j++)
+        {
+            if (border_map(i, j) == 255)
+                white_points.push_back(make_tuple(i, j));
+            if (border_map(i, j) == 127)
+                gray_points.push_back(make_tuple(i, j));
+        }
+
+    int i1 = 0, i2 = 0, j1 = 0, j2 = 0;
+    for (uint i = 0; i < white_points.size(); i++)
+        for (uint j = 0; j < gray_points.size(); j++)
+        {
+            tie(i1, j1) = white_points[i];
+            tie(i2, j2) = gray_points[j];
+
+            if ((abs(i1 - i2) <= 1) && (abs(j1 - j2) <= 1))
+            {
+                white_points.push_back(make_tuple(i2, j2));
+                gray_points.erase(gray_points.begin() + j);
+            }
+        }
+
+    for (uint i = 0; i < white_points.size(); i++)
+    {
+        tie(i1, j1) = white_points[i];
+        border_map_new(i1, j1) = 255;
+    }
+
+
+    /*OUT BORDERS MAP*/
+    for (uint i = 0; i < border_map_new.n_rows; i++)
+        for (uint j = 0; j < border_map_new.n_cols; j++)
+            src_image(i, j) = make_tuple(border_map_new(i, j),border_map_new(i, j),border_map_new(i, j));
     return src_image;
 
     /*FIND BORDER*/
     double pers = 0.05;
-    uint top_border = border_map.n_rows * pers, side_border = border_map.n_cols * pers;
+    uint top_border = border_map_new.n_rows * pers, side_border = border_map_new.n_cols * pers;
     uint top = 0, bottom = 0, left = 0, right = 0;
     uint max1 = 0, max2 = 0, max1_num = 0, max2_num = 0, tmp = 0;
 
     for (uint i = 0; i < top_border; i++)
     {
-        for (uint j = 0; j < border_map.n_cols; j++)
-            if (border_map(i, j) == 255)
+        for (uint j = 0; j < border_map_new.n_cols; j++)
+            if (border_map_new(i, j) == 255)
                 tmp++;
 
         if (tmp >= max2)
@@ -705,7 +803,7 @@ Image canny(Image src_image, int threshold1, int threshold2) /*+++++*/
                 max2_num = i;
             }
 
-            i += 2;
+            i++;
         }
 
         tmp = 0;
@@ -713,12 +811,12 @@ Image canny(Image src_image, int threshold1, int threshold2) /*+++++*/
     top = fmax(max1_num, max2_num);
 
     max1 = max2 = tmp = 0;
-    max1_num = max2_num = border_map.n_rows - 1;
+    max1_num = max2_num = border_map_new.n_rows - 1;
 
-    for (uint i = border_map.n_rows - 1; i > border_map.n_rows - 1 - top_border; i--)
+    for (uint i = border_map_new.n_rows - 1; i > border_map_new.n_rows - 1 - top_border; i--)
     {
-        for (uint j = 0; j < border_map.n_cols; j++)
-            if (border_map(i, j) == 255)
+        for (uint j = 0; j < border_map_new.n_cols; j++)
+            if (border_map_new(i, j) == 255)
                 tmp++;
 
         if (tmp >= max2)
@@ -736,7 +834,7 @@ Image canny(Image src_image, int threshold1, int threshold2) /*+++++*/
                 max2_num = i;
             }
 
-            i -= 2;
+            i--;
         }
 
         tmp = 0;
@@ -747,8 +845,8 @@ Image canny(Image src_image, int threshold1, int threshold2) /*+++++*/
 
     for (uint i = 0; i < side_border; i++)
     {
-        for (uint j = 0; j < border_map.n_rows; j++)
-            if (border_map(j, i) == 255)
+        for (uint j = 0; j < border_map_new.n_rows; j++)
+            if (border_map_new(j, i) == 255)
                 tmp++;
 
         if (tmp >= max2)
@@ -766,7 +864,7 @@ Image canny(Image src_image, int threshold1, int threshold2) /*+++++*/
                 max2_num = i;
             }
 
-            i += 2;
+            i++;
         }
 
         tmp = 0;
@@ -774,12 +872,12 @@ Image canny(Image src_image, int threshold1, int threshold2) /*+++++*/
     left = fmax(max1_num, max2_num);
 
     max1 = max2 = tmp = 0;
-    max1_num = max2_num = border_map.n_cols - 1;
+    max1_num = max2_num = border_map_new.n_cols - 1;
 
-    for (uint i = border_map.n_cols - 1; i > border_map.n_cols - 1 - side_border; i--)
+    for (uint i = border_map_new.n_cols - 1; i > border_map_new.n_cols - 1 - side_border; i--)
     {
-        for (uint j = 0; j < border_map.n_rows; j++)
-            if (border_map(j, i) == 255)
+        for (uint j = 0; j < border_map_new.n_rows; j++)
+            if (border_map_new(j, i) == 255)
                 tmp++;
 
         if (tmp >= max2)
@@ -797,7 +895,7 @@ Image canny(Image src_image, int threshold1, int threshold2) /*+++++*/
                 max2_num = i;
             }
 
-            i -= 2;
+            i--;
         }
 
         tmp = 0;
@@ -805,7 +903,6 @@ Image canny(Image src_image, int threshold1, int threshold2) /*+++++*/
     right = fmin(max1_num, max2_num);
 
     /*CUT*/
-    //cout << top << " " << bottom << " " << left << " " << right << endl;
     src_image_save = src_image_save.submatrix(top, left, bottom - top, right - left);
 
     return src_image_save;
