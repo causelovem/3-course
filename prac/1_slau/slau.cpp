@@ -14,7 +14,6 @@ bool flag = false;
 
 void make_solution (std::vector < std::vector <double> > &matrix, std::vector <double> &right_vec, std::vector <int> var_vec, int num_eq, int num_var);
 std::vector <int> new_gauss (std::vector < std::vector <double> > &matrix, std::vector <double> &right_vec, int num_eq, int num_var);
-std::vector <double> gauss (std::vector < std::vector <double> > matrix, std::vector <double> right_vec, int num_eq, int num_var);
 
 int main(int argc, char const *argv[])
 {
@@ -98,89 +97,6 @@ int main(int argc, char const *argv[])
     cout << endl << ">TIME " << (float)(y - x) / CLOCKS_PER_SEC << endl;
 
     return 0;
-}
-
-std::vector <double> gauss (std::vector < std::vector <double> > matrix, std::vector <double> right_vec, int num_eq, int num_var)
-{
-    std::vector <double> tmp_vec;
-
-    int step = 0, max_num = 0;
-    double max = 0, tmp = 0;
-
-    while (step < num_eq)
-    {
-        tmp_vec.clear();
-        max = fabs(matrix[step][step]);
-        max_num = step;
-
-        for (int i = step + 1; i < num_eq; i++)
-        {
-            if (fabs(matrix[i][step]) > max)
-            {
-                max = fabs(matrix[i][step]);
-                max_num = i;
-            }
-        }
-
-        if (((max < EPS) && (step != num_eq - 1)) || ((max < EPS) && (step == num_eq - 1) && right_vec[step]))
-        /*if (max < EPS)*/
-        {
-            cout << ">Can not solve slau because of zero col/row\n";
-            return tmp_vec;
-        }
-        else
-        if ((max < EPS) && (step == num_eq - 1))
-            flag = true;
-
-        tmp_vec = matrix[step];
-        matrix[step] = matrix[max_num];
-        matrix[max_num] = tmp_vec;
-
-        tmp = right_vec[step];
-        right_vec[step] = right_vec[max_num];
-        right_vec[max_num] = tmp;
-
-        for (int i = step; i < num_eq; i++)
-        {
-            tmp = matrix[i][step];
-            if (fabs(tmp) < EPS)
-                continue;
-            for (int j = 0; j < num_eq; j++)
-                matrix[i][j] = matrix[i][j] / tmp;
-
-            right_vec[i] = right_vec[i] / tmp;
-
-            if (i == step)
-                continue;
-
-            for (int j = 0; j < num_eq; j++)
-                matrix[i][j] = matrix[i][j] - matrix[step][j];
-
-
-            right_vec[i] = right_vec[i] - right_vec[step];
-        }
-
-        /*for (int i = 0; i < num_eq; i++)
-        {
-            for (int j = 0; j < num_var; j++)
-                cout << matrix[i][j] << " ";
-
-            cout << " " << right_vec[i];
-            cout << endl;
-        }*/
-
-        step++;
-    }
-
-    tmp_vec.clear();
-    for (int i = num_var - 1; i > -1; i--)
-    {
-        tmp_vec.push_back(right_vec[i]);
-        for (int j = 0; j < i; j++)
-            right_vec[j] = right_vec[j] - matrix[j][i] * right_vec[i];
-    }
-
-    return tmp_vec;
 }
 
 std::vector <int> new_gauss (std::vector < std::vector <double> > &matrix, std::vector <double> &right_vec, int num_eq, int num_var)
