@@ -34,4 +34,5 @@ $(TARGET): matrix.cpp
 
 clean:
 	rm -rf $(TARGET)
+	rm -rf check
 	cp /dev/null plot.dat

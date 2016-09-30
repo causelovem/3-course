@@ -9,7 +9,7 @@ using namespace std;
 
 int main(int argc, char const *argv[])
 {
-	if (argc != 4)
+    if (argc != 4)
     {
         cerr << ">Unexpected quantity of arguments, check your comand string." << endl;
         return -1;
@@ -47,8 +47,8 @@ int main(int argc, char const *argv[])
 
     Matrix A = Matrix(row, col);
     for(uint i = 0; i < row; i++)
-    	for (uint j = 0; j < col; j++)
-    		fileA >> A(i, j);
+        for (uint j = 0; j < col; j++)
+            fileA >> A(i, j);
 
     fileB >> row;
     fileB >> row;
@@ -56,8 +56,8 @@ int main(int argc, char const *argv[])
 
     Matrix B = Matrix(row, col);
     for(uint i = 0; i < row; i++)
-    	for (uint j = 0; j < col; j++)
-    		fileB >> B(i, j);
+        for (uint j = 0; j < col; j++)
+            fileB >> B(i, j);
 
     fileC >> row;
     fileC >> row;
@@ -65,27 +65,30 @@ int main(int argc, char const *argv[])
 
     Matrix C = Matrix(row, col);
     for(uint i = 0; i < row; i++)
-    	for (uint j = 0; j < col; j++)
-    		fileC >> C(i, j);
+        for (uint j = 0; j < col; j++)
+            fileC >> C(i, j);
 
     Matrix res = A * B;
-    double eps = 0.001;
+    double eps = 1;
 
     for(uint i = 0; i < row; i++)
-    	for (uint j = 0; j < col; j++)
-    		if(fabs(fabs(res(i, j)) - fabs(C(i, j))) > eps)
-    		{
-    			cerr << ">Matrix not equal." << endl;
-    			fileA.close();
-			    fileB.close();
-			    fileC.close();
-    			return -1;
-    		}
+        for (uint j = 0; j < col; j++)
+        /*{
+            cout << fabs(res(i, j)) << " "  << fabs(C(i, j)) << endl;
+        }*/
+            if(fabs(fabs(res(i, j)) - fabs(C(i, j))) > eps)
+            {
+                cerr << ">Matrixs are not equal." << endl;
+                fileA.close();
+                fileB.close();
+                fileC.close();
+                return -1;
+            }
 
-    cerr << ">Matrix are equal*_*" << endl;
+    cerr << ">Matrixs are equal*_*" << endl;
 
     fileA.close();
     fileB.close();
     fileC.close();
-	return 0;
+    return 0;
 }

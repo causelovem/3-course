@@ -10,27 +10,10 @@
 
 using namespace std;
 
-/*template<typename T>
-int swich_type (int type, std::vector < std::vector<T> > &matrixA, std::vector < std::vector<T> > &matrixB, std::vector < std::vector<T> > &matrixC);
-template<typename T>
-int ijk_multiple (std::vector < std::vector<T> >matrixA, std::vector < std::vector<T> > matrixB, std::vector < std::vector<T> > &matrixC);
-template<typename T>
-int ikj_multiple (std::vector < std::vector<T> >matrixA, std::vector < std::vector<T> > matrixB, std::vector < std::vector<T> > &matrixC);
-template<typename T>
-int jki_multiple (std::vector < std::vector<T> >matrixA, std::vector < std::vector<T> > matrixB, std::vector < std::vector<T> > &matrixC);
-template<typename T>
-int jik_multiple (std::vector < std::vector<T> >matrixA, std::vector < std::vector<T> > matrixB, std::vector < std::vector<T> > &matrixC);
-template<typename T>
-int kij_multiple (std::vector < std::vector<T> >matrixA, std::vector < std::vector<T> > matrixB, std::vector < std::vector<T> > &matrixC);
-template<typename T>
-int kji_multiple (std::vector < std::vector<T> >matrixA, std::vector < std::vector<T> > matrixB, std::vector < std::vector<T> > &matrixC);
-template<typename T>
-void read_matrix (std::vector < std::vector<T> > &matrix, ifstream &chanal);*/
-
 template<typename T>
 int ijk_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::vector<T> > &matrixB, std::vector < std::vector<T> > &matrixC)
 {
-    /*row * col*/
+    /*row * col*/    
 
     if (matrixA[0].size() != matrixB.size())
     {
@@ -38,7 +21,7 @@ int ijk_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
         return -1;
     }
 
-    std::vector<T> tmp_vec;
+    std::vector<T> tmp_vec; 
 
     for (uint j = 0; j < matrixB[0].size(); j++)
         tmp_vec.push_back(0);
@@ -46,6 +29,9 @@ int ijk_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     for (uint i = 0; i < matrixA.size(); i++)
         matrixC.push_back(tmp_vec);
 
+    float time = 0;
+    ofstream plot("plot.dat", ios_base::app);
+    time = clock();
     for (uint i = 0; i < matrixA.size(); i++)
     {
         for (uint j = 0; j < matrixB[0].size(); j++)
@@ -56,6 +42,8 @@ int ijk_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
             matrixC[i][j] = sum;
         }
     }
+    time = clock() - time;
+    plot << 1 << " " << time / CLOCKS_PER_SEC << endl;
 
     return 0;
 }
@@ -79,6 +67,9 @@ int ikj_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     for (uint i = 0; i < matrixA.size(); i++)
         matrixC.push_back(tmp_vec);
 
+    float time = 0;
+    ofstream plot("plot.dat", ios_base::app);
+    time = clock();
     for (uint i = 0; i < matrixA.size(); i++)
     {
         for (uint k = 0; k < matrixB.size(); k++)
@@ -88,6 +79,8 @@ int ikj_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
                 matrixC[i][j] += elem * matrixB[k][j];
         }
     }
+    time = clock() - time;
+    plot << 2 << " " << time / CLOCKS_PER_SEC << endl;
 
     return 0;
 }
@@ -111,6 +104,9 @@ int jki_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     for (uint i = 0; i < matrixA.size(); i++)
         matrixC.push_back(tmp_vec);
 
+    float time = 0;
+    ofstream plot("plot.dat", ios_base::app);
+    time = clock();
     for (uint j = 0; j < matrixB[0].size(); j++)
     {
         for (uint k = 0; k < matrixB.size(); k++)
@@ -120,6 +116,8 @@ int jki_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
                 matrixC[i][j] += elem * matrixA[i][k];
         }
     }
+    time = clock() - time;
+    plot << 3 << " " << time / CLOCKS_PER_SEC << endl;
 
     return 0;
 }
@@ -143,6 +141,9 @@ int jik_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     for (uint i = 0; i < matrixA.size(); i++)
         matrixC.push_back(tmp_vec);
 
+    float time = 0;
+    ofstream plot("plot.dat", ios_base::app);
+    time = clock();
     for (uint j = 0; j < matrixB[0].size(); j++)
     {
         for (uint i = 0; i < matrixA.size(); i++)
@@ -153,6 +154,8 @@ int jik_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
             matrixC[i][j] = sum;
         }
     }
+    time = clock() - time;
+    plot << 4 << " " << time / CLOCKS_PER_SEC << endl;
 
     return 0;
 }
@@ -176,6 +179,9 @@ int kij_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     for (uint i = 0; i < matrixA.size(); i++)
         matrixC.push_back(tmp_vec);
 
+    float time = 0;
+    ofstream plot("plot.dat", ios_base::app);
+    time = clock();
     for (uint k = 0; k < matrixB.size(); k++)
     {
         for (uint i = 0; i < matrixA.size(); i++)
@@ -185,6 +191,8 @@ int kij_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
                 matrixC[i][j] += elem * matrixB[k][j];
         }
     }
+    time = clock() - time;
+    plot << 5 << " " << time / CLOCKS_PER_SEC << endl;
 
     return 0;
 }
@@ -208,6 +216,9 @@ int kji_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     for (uint i = 0; i < matrixA.size(); i++)
         matrixC.push_back(tmp_vec);
 
+    float time = 0;
+    ofstream plot("plot.dat", ios_base::app);
+    time = clock();
     for (uint k = 0; k < matrixB.size(); k++)
     {
         for (uint j = 0; j < matrixB[0].size(); j++)
@@ -217,6 +228,8 @@ int kji_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
                 matrixC[i][j] += elem * matrixA[i][k];
         }
     }
+    time = clock() - time;
+    plot << 6 << " " << time / CLOCKS_PER_SEC << endl;
 
     return 0;
 }
@@ -247,73 +260,40 @@ void read_matrix (std::vector < std::vector<T> > &matrix, ifstream &chanal)
 template<typename T>
 int swich_type (int type, std::vector < std::vector<T> > &matrixA, std::vector < std::vector<T> > &matrixB, std::vector < std::vector<T> > &matrixC)
 {
-    float time = 0;
-    int ret = 0;
-    ofstream plot("plot.dat", ios_base::app);
     if (type == 1)
     {
-        time = clock();
-        ret = ijk_multiple<T>(matrixA, matrixB, matrixC);
-        time = clock() - time;
-        if (ret == -1)
+        if (ijk_multiple<T>(matrixA, matrixB, matrixC) == -1)
             return -1;
-
-        plot << 1 << " " << time / CLOCKS_PER_SEC << endl;
     }
     else
     if (type == 2)
     {
-        time = clock();
-        ret = ikj_multiple<T>(matrixA, matrixB, matrixC);
-        time = clock() - time;
-        if (ret == -1)
+        if (ikj_multiple<T>(matrixA, matrixB, matrixC) == -1)
             return -1;
-
-        plot << 2 << " " << time / CLOCKS_PER_SEC << endl;
     }
     else
     if (type == 3)
     {
-        time = clock();
-        ret = jki_multiple<T>(matrixA, matrixB, matrixC);
-        time = clock() - time;
-        if (ret == -1)
+        if (jki_multiple<T>(matrixA, matrixB, matrixC) == -1)
             return -1;
-
-        plot << 3 << " " << time / CLOCKS_PER_SEC << endl;
     }
     else
     if (type == 4)
     {
-        time = clock();
-        ret = jik_multiple<T>(matrixA, matrixB, matrixC);
-        time = clock() - time;
-        if (ret == -1)
+        if (jik_multiple<T>(matrixA, matrixB, matrixC) == -1)
             return -1;
-
-        plot << 4 << " " << time / CLOCKS_PER_SEC << endl;
     }
     else
     if (type == 5)
     {
-        time = clock();
-        ret = kij_multiple<T>(matrixA, matrixB, matrixC);
-        time = clock() - time;
-        if (ret == -1)
+        if (kij_multiple<T>(matrixA, matrixB, matrixC) == -1)
             return -1;
-
-        plot << 5 << " " << time / CLOCKS_PER_SEC << endl;
     }
     else
     if (type == 6)
     {
-        time = clock();
-        ret = kji_multiple<T>(matrixA, matrixB, matrixC);
-        time = clock() - time;
-        if (ret == -1)
+        if (kji_multiple<T>(matrixA, matrixB, matrixC) == -1)
             return -1;
-
-        plot << 6 << " " << time / CLOCKS_PER_SEC;
     }
 
     return 0;
