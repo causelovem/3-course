@@ -29,15 +29,17 @@ int ijk_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     for (uint i = 0; i < matrixA.size(); i++)
         matrixC.push_back(tmp_vec);
 
+    uint size1 = matrixA.size(), size2 = matrixB[0].size(), size3 = matrixB.size();
+
     float time = 0;
     ofstream plot("plot.dat", ios_base::app);
     time = clock();
-    for (uint i = 0; i < matrixA.size(); i++)
+    for (uint i = 0; i < size1; i++)
     {
-        for (uint j = 0; j < matrixB[0].size(); j++)
+        for (uint j = 0; j < size2; j++)
         {
             T sum = 0.0;
-            for (uint k = 0; k < matrixB.size(); k++)
+            for (uint k = 0; k < size3; k++)
                 sum += matrixA[i][k] * matrixB[k][j];
             matrixC[i][j] = sum;
         }
@@ -67,15 +69,17 @@ int ikj_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     for (uint i = 0; i < matrixA.size(); i++)
         matrixC.push_back(tmp_vec);
 
+    uint size1 = matrixA.size(), size2 = matrixB[0].size(), size3 = matrixB.size();
+
     float time = 0;
     ofstream plot("plot.dat", ios_base::app);
     time = clock();
-    for (uint i = 0; i < matrixA.size(); i++)
+    for (uint i = 0; i < size1; i++)
     {
-        for (uint k = 0; k < matrixB.size(); k++)
+        for (uint k = 0; k < size3; k++)
         {
             T elem = matrixA[i][k];
-            for (uint j = 0; j < matrixB[0].size(); j++)
+            for (uint j = 0; j < size2; j++)
                 matrixC[i][j] += elem * matrixB[k][j];
         }
     }
@@ -104,15 +108,17 @@ int jki_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     for (uint i = 0; i < matrixA.size(); i++)
         matrixC.push_back(tmp_vec);
 
+    uint size1 = matrixA.size(), size2 = matrixB[0].size(), size3 = matrixB.size();
+
     float time = 0;
     ofstream plot("plot.dat", ios_base::app);
     time = clock();
-    for (uint j = 0; j < matrixB[0].size(); j++)
+    for (uint j = 0; j < size2; j++)
     {
-        for (uint k = 0; k < matrixB.size(); k++)
+        for (uint k = 0; k < size3; k++)
         {
             T elem = matrixB[k][j];
-            for (uint i = 0; i < matrixA.size(); i++)
+            for (uint i = 0; i < size1; i++)
                 matrixC[i][j] += elem * matrixA[i][k];
         }
     }
@@ -141,15 +147,17 @@ int jik_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     for (uint i = 0; i < matrixA.size(); i++)
         matrixC.push_back(tmp_vec);
 
+    uint size1 = matrixA.size(), size2 = matrixB[0].size(), size3 = matrixB.size();
+
     float time = 0;
     ofstream plot("plot.dat", ios_base::app);
     time = clock();
-    for (uint j = 0; j < matrixB[0].size(); j++)
+    for (uint j = 0; j < size2; j++)
     {
-        for (uint i = 0; i < matrixA.size(); i++)
+        for (uint i = 0; i < size1; i++)
         {
             T sum = 0.0;
-            for (uint k = 0; k < matrixB.size(); k++)
+            for (uint k = 0; k < size3; k++)
                 sum += matrixA[i][k] * matrixB[k][j];
             matrixC[i][j] = sum;
         }
@@ -179,15 +187,17 @@ int kij_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     for (uint i = 0; i < matrixA.size(); i++)
         matrixC.push_back(tmp_vec);
 
+    uint size1 = matrixA.size(), size2 = matrixB[0].size(), size3 = matrixB.size();
+
     float time = 0;
     ofstream plot("plot.dat", ios_base::app);
     time = clock();
-    for (uint k = 0; k < matrixB.size(); k++)
+    for (uint k = 0; k < size3; k++)
     {
-        for (uint i = 0; i < matrixA.size(); i++)
+        for (uint i = 0; i < size1; i++)
         {
             T elem = matrixA[i][k];
-            for (uint j = 0; j < matrixB[0].size(); j++)
+            for (uint j = 0; j < size2; j++)
                 matrixC[i][j] += elem * matrixB[k][j];
         }
     }
@@ -216,15 +226,17 @@ int kji_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     for (uint i = 0; i < matrixA.size(); i++)
         matrixC.push_back(tmp_vec);
 
+    uint size1 = matrixA.size(), size2 = matrixB[0].size(), size3 = matrixB.size();
+
     float time = 0;
     ofstream plot("plot.dat", ios_base::app);
     time = clock();
-    for (uint k = 0; k < matrixB.size(); k++)
+    for (uint k = 0; k < size3; k++)
     {
-        for (uint j = 0; j < matrixB[0].size(); j++)
+        for (uint j = 0; j < size2; j++)
         {
             T elem = matrixB[k][j];
-            for (uint i = 0; i < matrixA.size(); i++)
+            for (uint i = 0; i < size1; i++)
                 matrixC[i][j] += elem * matrixA[i][k];
         }
     }
