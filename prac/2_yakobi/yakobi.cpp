@@ -7,7 +7,7 @@
 
 using namespace std;
 
-void yakobi (double **matrix, int size, ofstream &out_file);
+void yakobi (double **&matrix, int size, ofstream &out_file);
 void mul_matrix (double **&matrixA, double **&matrixB, int size);
 
 int main(int argc, char const *argv[])
@@ -24,6 +24,7 @@ int main(int argc, char const *argv[])
     if (matrix_file.is_open() == false)
     {
         printf(">Can not open matrix file with such name.\n");
+        out_file.close();
         return -1;
     }
 
@@ -59,7 +60,7 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-void yakobi (double **matrix, int size, ofstream &out_file)
+void yakobi (double **&matrix, int size, ofstream &out_file)
 {
     double eps = 0.001;
     double **vec_matrix = NULL;
@@ -99,14 +100,8 @@ void yakobi (double **matrix, int size, ofstream &out_file)
 
         tmp = 2 * matrix[row][col] / (matrix[row][row] - matrix[col][col]);
 
-        //cout << (tmp / fabs(tmp)) << endl;
-
-        rsin = sqrt((0.5) * (1 - 1 / (sqrt(1 + tmp * tmp))));
-        rcos = sqrt((0.5) * (1 + 1 / (sqrt(1 + tmp * tmp))));
-
-        //cout << tmp << " " << rsin << " " << rcos << endl;
-
-        //break;
+        rsin = (tmp / fabs(tmp)) * sqrt((0.5) * (1.0 - 1.0 / (sqrt(1.0 + tmp * tmp))));
+        rcos = sqrt((0.5) * (1.0 + 1.0 / (sqrt(1.0 + tmp * tmp))));
 
         for (int i = 0; i < size; i++)
         {
@@ -119,16 +114,6 @@ void yakobi (double **matrix, int size, ofstream &out_file)
         rot_matrix[row][col] = -rsin;
         rot_matrix[col][row] = rsin;
         rot_matrix[col][col] = rcos;
-
-        for (int i = 0; i < size; i++)
-        {
-            for (int j = 0; j < size; j++)
-            {
-                cout << rot_matrix[j][i] << " ";
-            }
-
-            cout << endl;
-        }
 
         if (flag == true)
             mul_matrix(vec_matrix, rot_matrix, size);
@@ -153,46 +138,21 @@ void yakobi (double **matrix, int size, ofstream &out_file)
         for (int i = 0; i < size; i++)
             for (int j = 0; j < size; j++)
                 matrix[i][j] = rot_matrix[i][j];
-
-        for (int i = 0; i < size; i++)
-        {
-            for (int j = 0; j < size; j++)
-            {
-                cout << matrix[j][i] << " ";
-            }
-
-            cout << endl;
-        }
-
-        break;
     }
 
-    /*for (int i = 0; i < size; i++)
-        cout << matrix[i][i] << " ";
-    cout << endl;
-
     for (int i = 0; i < size; i++)
-    {
-        for (int j = 0; j < size; j++)
-        {
-            cout << vec_matrix[j][i] << " ";
-        }
-
-        cout << endl;
-    }*/
-
-    for (int i = 0; i < size; i++)
-        out_file << matrix[i][i] << " ";
+        out_file << "l" << i + 1 << " = " << matrix[i][i] << ";  ";
     out_file << endl;
 
     for (int i = 0; i < size; i++)
     {
+        out_file << "v" << i + 1 << " = { "; 
         for (int j = 0; j < size; j++)
         {
-            out_file << vec_matrix[j][i] << " ";
+            out_file << vec_matrix[j][i] << "; ";
         }
 
-        out_file << endl;
+        out_file << "}"<< endl;
     }
 
     for (int i = 0; i < size; i++)
