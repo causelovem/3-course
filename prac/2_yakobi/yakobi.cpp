@@ -8,7 +8,7 @@
 using namespace std;
 
 void yakobi (double **&matrix, int size, ofstream &out_file);
-void mul_matrix (double **&matrixA, double **&matrixB, int size);
+void mul_matrix (double **&matrixA, double **&rot_matrix, int size, int i_cord, int j_cord, bool flag);
 
 int main(int argc, char const *argv[])
 {
@@ -116,7 +116,7 @@ void yakobi (double **&matrix, int size, ofstream &out_file)
         rot_matrix[col][col] = rcos;
 
         if (flag == true)
-            mul_matrix(vec_matrix, rot_matrix, size);
+            mul_matrix(vec_matrix, rot_matrix, size, row, col, true);
         else
         {
             flag = true;
@@ -126,18 +126,7 @@ void yakobi (double **&matrix, int size, ofstream &out_file)
                     vec_matrix[i][j] = rot_matrix[i][j];
         }
 
-        mul_matrix(matrix, rot_matrix, size);
-
-        rot_matrix[row][row] = rcos;
-        rot_matrix[row][col] = rsin;
-        rot_matrix[col][row] = -rsin;
-        rot_matrix[col][col] = rcos;
-
-        mul_matrix(rot_matrix, matrix, size);
-
-        for (int i = 0; i < size; i++)
-            for (int j = 0; j < size; j++)
-                matrix[i][j] = rot_matrix[i][j];
+        mul_matrix(matrix, rot_matrix, size, row, col, false);
     }
 
     for (int i = 0; i < size; i++)
@@ -170,39 +159,65 @@ void yakobi (double **&matrix, int size, ofstream &out_file)
     return;
 }
 
-void mul_matrix (double **&matrixA, double **&matrixB, int size)
+void mul_matrix (double **&matrixA, double **&rot_matrix, int size, int i_cord, int j_cord, bool flag)
 {
-    double **matrixC = NULL;
+    double *tmp_vec1 = NULL, *tmp_vec2 = NULL;
 
-    matrixC = new double* [size];
-    for (int i = 0; i < size; i++)
-        matrixC[i] = new double [size];
-
-    for (int i = 0; i < size; i++)
-        for (int j = 0; j < size; j++)
-            matrixC[i][j] = 0; 
+    tmp_vec1 = new double [size];
+    tmp_vec2 = new double [size];
 
     for (int i = 0; i < size; i++)
     {
-        for (int k = 0; k < size; k++)
-        {
-            double elem = matrixA[i][k];
-            for (int j = 0; j < size; j++)
-                matrixC[i][j] += elem * matrixB[k][j];
-        }
+        tmp_vec1[i] = 0;
+        tmp_vec2[i] = 0;
     }
-
-    for (int i = 0; i < size; i++)
-        for (int j = 0; j < size; j++)
-            matrixA[i][j] = matrixC[i][j];
 
     for (int i = 0; i < size; i++)
     {
-        delete [] matrixC[i];
-        matrixC[i] = NULL;
+        tmp_vec1[i] = matrixA[i][i_cord] * rot_matrix[i_cord][i_cord] + matrixA[i][j_cord] * rot_matrix[j_cord][i_cord];
+        tmp_vec2[i] = matrixA[i][i_cord] * rot_matrix[i_cord][j_cord] + matrixA[i][j_cord] * rot_matrix[j_cord][j_cord];
     }
-    delete [] matrixC;
-    matrixC = NULL;
+
+    for (int i = 0; i < size; i++)
+    {
+        matrixA[i][i_cord] = tmp_vec1[i];
+        matrixA[i][j_cord] = tmp_vec2[i];
+    }
+
+    for (int i = 0; i < size; i++)
+    {
+        tmp_vec1[i] = 0;
+        tmp_vec2[i] = 0;
+    }
+
+    if (flag == true)
+    {
+        delete [] tmp_vec1;
+        delete [] tmp_vec2;
+        tmp_vec1 = NULL;
+        tmp_vec2 = NULL;
+        return;
+    }
+
+    rot_matrix[i_cord][j_cord] *= -1;
+    rot_matrix[j_cord][i_cord] *= -1;
+
+    for (int i = 0; i < size; i++)
+    {
+        tmp_vec1[i] = matrixA[i_cord][i] * rot_matrix[i_cord][i_cord] + matrixA[j_cord][i] * rot_matrix[i_cord][j_cord];
+        tmp_vec2[i] = matrixA[i_cord][i] * rot_matrix[j_cord][i_cord] + matrixA[j_cord][i] * rot_matrix[j_cord][j_cord];
+    }
+
+    for (int i = 0; i < size; i++)
+    {
+        matrixA[i_cord][i] = tmp_vec1[i];
+        matrixA[j_cord][i] = tmp_vec2[i];
+    }
+
+    delete [] tmp_vec1;
+    delete [] tmp_vec2;
+    tmp_vec1 = NULL;
+    tmp_vec2 = NULL;
 
     return;
 }
