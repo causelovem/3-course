@@ -11,69 +11,79 @@
 
 using namespace std;
 
-void read_matrix (std::vector < std::vector<float> > &matrix, ifstream &chanal)
+void read_matrix (float *&matrix, ifstream &chanal, uint &size)
 {
-    float num;
-    uint row = 0, col = 0;
-    std::vector<float> tmp_vec;
+    chanal >> size;
+    chanal >> size;
 
-    chanal >> row;
-    chanal >> col;
-    for (uint i = 0; i < row; i++)
-    {
-        for (uint j = 0; j < col; j++)
-        {
-            chanal >> num;
-            tmp_vec.push_back(num);
-        }
-        matrix.push_back(tmp_vec);
-        tmp_vec.clear();
-    }
+    matrix = new float [size * size];
+
+    for (uint i = 0; i < size * size; i++)
+        chanal >> matrix[i];
 
     return;
 }
 
-int block_multiple (std::vector < std::vector<float> > &matrixA, std::vector < std::vector<float> > &matrixB, std::vector < std::vector<float> > &matrixC, uint block_size)
+static void do_block(uint n, uint M, uint N, uint K, float* A, float* B, float* C)
 {
-    if (matrixA[0].size() != matrixB.size())
+    for (uint i = 0; i < M; ++i)
     {
-        cerr << ">Can not multiple such matrix: wrong sizes." << endl;
-        return -1;
-    } 
+        const int iOffset = i*n;
+        for (uint j = 0; j < N; ++j)
+        {
+            float cij = 0.0;
+            for (uint k = 0; k < K; ++k)
+                cij += A[iOffset+k] * B[k*n+j];
+            C[iOffset+j] += cij;
+        }
+    }
+}
 
-    std::vector<float> tmp_vec;
-
-    uint size1 = matrixA.size(), size2 = matrixB[0].size(), size3 = matrixB.size();
-
-    for (uint j = 0; j < size2; j++)
-        tmp_vec.push_back(0);
-
-    for (uint i = 0; i < size1; i++)
-        matrixC.push_back(tmp_vec);
-
-    for (uint i = 0; i < size1; i = i + block_size)
-        for (uint j = 0; j < size2; j = j + block_size)
-            for (uint k = 0; k < size3; k = k + block_size)
+void block_multiply(uint n , float* A, float* B, float* C, bool type, uint block_size)
+{
+    if (type == 1)
+    {       
+        for (uint i = 0; i < n; i+=block_size)
+        {
+            const uint iOffset = i * n;
+            for (uint j = 0; j < n; j+=block_size)
             {
-                uint l = i + block_size, t = j + block_size, n = k + block_size;
-                for (uint i1 = 0; i1 < l; i1++)
+                for (uint k = 0; k < n; k+=block_size)
                 {
-                    for (uint j1 = 0; j1 < t; j1++)
-                    {
-                        float elem = matrixA[i1][j1];
-                        for (uint k1 = 0; k1 < n; k1++)
-                            matrixC[i1][k1] += elem * matrixB[j1][k1];
-                    }
+                    uint M = min(block_size,n-i);
+                    uint N = min(block_size,n-j);
+                    uint K = min(block_size,n-k);
+
+                    do_block(n, M, N, K, A + iOffset + k, B + k*n + j, C + iOffset + j);
                 }
             }
+        }
+    }
+    else
+    {
+        for (uint i = 0; i < n; i+=block_size)
+        {
+            const uint iOffset = i * n;
+            for (uint k = 0; k < n; k+=block_size)
+            {
+                for (uint j = 0; j < n; j+=block_size)
+                {
+                    uint M = min(block_size,n-i);
+                    uint N = min(block_size,n-j);
+                    uint K = min(block_size,n-k);
 
-    return 0;
+                    do_block(n, M, N, K, A + iOffset + k, B + k*n + j, C + iOffset + j);
+                }
+            }
+        }
+    }
 }
 
 int main(int argc, char const *argv[])
 {
-    /*<A-file> <B-file> <C-file> <block size>*/
-    if (argc != 5)
+    /*<A-file> <B-file> <C-file> <block_size> <type>*/
+    /*0 - ijk, 1 - ikj*/
+    if (argc != 6)
     {
         cerr << ">Unexpected quantity of arguments, check your comand string." << endl;
         return -1;
@@ -103,34 +113,94 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
-    uint block_size = atoi(argv[4]);
+    int block_size = atoi(argv[4]);
+    int type = atoi(argv[5]);
 
-    std::vector < std::vector<float> > matrixA;
-    std::vector < std::vector<float> > matrixB;
-    std::vector < std::vector<float> > matrixC;
-    read_matrix(matrixA, fileA);
-    read_matrix(matrixB, fileB);
+    float *matrixA;
+    float *matrixB;
+    float *matrixC;
 
-    if (block_multiple(matrixA, matrixB, matrixC, block_size) == -1)
+    uint size = 0;
+
+    read_matrix(matrixA, fileA, size);
+
+    read_matrix(matrixB, fileB, size);
+
+    matrixC = new float [size * size];
+    for (uint i = 0; i < size * size; i++)
+        matrixC[i] = 0;
+
+    int events[4] = {PAPI_L1_DCM, PAPI_L2_DCM, PAPI_FP_OPS, PAPI_TOT_CYC};
+    long_long values[4];
+
+    if (PAPI_num_counters() < 4)
     {
+        cout << ">No hardware counters here, or PAPI not supported." << endl;
         fileA.close();
         fileB.close();
         fileC.close();
         return -1;
     }
 
-    fileC << matrixC.size() << " " << matrixC[0].size() << "\n";
-
-    for (uint i = 0; i < matrixC.size(); i++)
+    if (PAPI_start_counters(events, 3) != PAPI_OK)
     {
-        for (uint j = 0; j < matrixC[0].size(); j++)
+        cout << ">PAPI faild to start counters." << endl;
+        delete [] matrixA;
+        delete [] matrixB;
+        delete [] matrixC;
+        fileA.close();
+        fileB.close();
+        fileC.close();
+        return -1;
+    }
+
+    block_multiply(size, matrixA, matrixB, matrixC, type, block_size);
+
+    if (PAPI_read_counters(values, 4) != PAPI_OK)
+    {
+        cout << ">PAPI faild to read counters." << endl;
+        delete [] matrixA;
+        delete [] matrixB;
+        delete [] matrixC;
+        fileA.close();
+        fileB.close();
+        fileC.close();
+        return -1;
+    }
+
+    cout << ">Total hardware flops = " << (float)values[2] << endl;
+    cout << ">L1 data cache misses is = " << (float)values[0] << endl;
+    cout << ">L2 data cache misses is = " << (float)values[1] << endl;
+    cout << ">Total cycles = " << (float)values[3] << endl;
+
+    if (PAPI_stop_counters(values, 4) != PAPI_OK)
+    {
+        cout << ">PAPI faild to stop counters." << endl;
+        delete [] matrixA;
+        delete [] matrixB;
+        delete [] matrixC;
+        fileA.close();
+        fileB.close();
+        fileC.close();
+        return -1;
+    }
+
+    fileC << size << " " << size << "\n";
+
+    for (uint i = 0; i < size; i++)
+    {
+        for (uint j = 0; j < size; j++)
         {
-            fileC << matrixC[i][j];
-            if (j != matrixC[0].size() - 1)
+            fileC << matrixC[i * size + j];
+            if (j != size - 1)
                 fileC << " ";
         }
         fileC << "\n";
     }
+
+    delete [] matrixA;
+    delete [] matrixB;
+    delete [] matrixC;
 
     fileA.close();
     fileB.close();
