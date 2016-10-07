@@ -72,17 +72,14 @@ int main(int argc, char const *argv[])
         for (uint j = 0; j < col; j++)
             if(fabs(fabs(res(i, j)) - fabs(C(i, j))) > eps)
             {
-                cerr << ">Matrixs are not equal." << endl;
+                cerr << ">Matrix are not equal." << endl;
                 fileA.close();
                 fileB.close();
                 fileC.close();
                 return -1;
             }
-        /*{
-            cout << fabs(res(i, j)) << " "  << fabs(C(i, j)) << endl;
-        }*/
 
-    cerr << ">Matrixs are equal*_*" << endl;
+    cerr << ">Matrix are equal*_*" << endl;
 
     fileA.close();
     fileB.close();

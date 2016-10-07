@@ -47,6 +47,8 @@ int ijk_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     time = clock() - time;
     plot << 1 << " " << time / CLOCKS_PER_SEC << endl;
 
+    plot.close();
+
     return 0;
 }
 
@@ -86,6 +88,8 @@ int ikj_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     time = clock() - time;
     plot << 2 << " " << time / CLOCKS_PER_SEC << endl;
 
+    plot.close();
+
     return 0;
 }
 
@@ -124,6 +128,8 @@ int jki_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     }
     time = clock() - time;
     plot << 3 << " " << time / CLOCKS_PER_SEC << endl;
+
+    plot.close();
 
     return 0;
 }
@@ -165,6 +171,8 @@ int jik_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     time = clock() - time;
     plot << 4 << " " << time / CLOCKS_PER_SEC << endl;
 
+    plot.close();
+
     return 0;
 }
 
@@ -204,6 +212,8 @@ int kij_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     time = clock() - time;
     plot << 5 << " " << time / CLOCKS_PER_SEC << endl;
 
+    plot.close();
+
     return 0;
 }
 
@@ -242,6 +252,8 @@ int kji_multiple (std::vector < std::vector<T> > &matrixA, std::vector < std::ve
     }
     time = clock() - time;
     plot << 6 << " " << time / CLOCKS_PER_SEC << endl;
+
+    plot.close();
 
     return 0;
 }
