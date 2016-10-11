@@ -41,15 +41,26 @@ struct scomp
     }
 } comp;
 
-void mutation (uint &gen, uint &top)
+void mutation (uint &gen, uint &quan)
 {
-    uint pos = 0, point = 1;
+    uint pos = 0, point = 1, tmp_gen = 0;
 
-    pos = (uint)(rand()) % top + 1;
+    pos = (uint)(rand()) % quan + 1;
+
+    tmp_gen = gen;
 
     point = point << pos;
 
-    gen = gen | point; /*???????????*/
+    tmp_gen = tmp_gen & point;
+
+    tmp_gen = tmp_gen ^ point;
+
+    point = !point;
+
+    gen = gen & point;
+    gen = gen | tmp_gen;
+
+    //gen = gen | point;
 
     return;
 }
@@ -97,7 +108,7 @@ uint cross (parents par, uint &quan)
 
     point = (uint)(rand()) % 100 + 1;
     if (point < MUT_PERS)
-        mutation(res, top);
+        mutation(res, quan);
 
     return res;
 }
