@@ -55,12 +55,10 @@ void mutation (uint &gen, uint &quan)
 
     tmp_gen = tmp_gen ^ point;
 
-    point = !point;
+    point = ~point;
 
     gen = gen & point;
     gen = gen | tmp_gen;
-
-    //gen = gen | point;
 
     return;
 }
@@ -68,24 +66,21 @@ void mutation (uint &gen, uint &quan)
 int fitness (const generation &individual, const vector< item > &items, const int &volume)
 {
     int fit = 0, v = 0;
-    uint one = 1, tmp = 0, conut = 0;
+    uint one = 1, tmp = 0, count = 0;
     uint quan = items.size();
 
     for (int i = quan - 1; i > -1; i--)
     {
         tmp = individual.gen & one;
-        tmp = tmp >> conut;
+        tmp = tmp >> count;
         fit +=  tmp * items[i].val;
         v += tmp * items[i].vol;
         one = one << 1;
-        conut++;
+        count++;
     }
 
     if (v > volume)
         fit = 0;
-
-    if (fit != 0)
-        cout << fit << " " << v << endl;
 
     return fit;
 }
@@ -197,9 +192,21 @@ int main(int argc, char const *argv[])
 
     selection(items, generat, volume);
 
-    cout << generat[GEN_BEGIN - 1].gen << endl;
+    uint one = 1 << (quan - 1), count = quan - 1;
+    uint tmp = 0, fit = 0, v = 0, res = generat[GEN_BEGIN - 1].gen;
 
-    fitness(generat[GEN_BEGIN - 1], items, volume);
+    cout << endl << ">Best chrom:" << endl;
+    for (int i = quan - 1; i > -1; i--)
+    {
+        tmp = res & one;
+        tmp = tmp >> count;
+        fit +=  tmp * items[quan - 1 - i].val;
+        v += tmp * items[quan - 1 - i].vol;
+        cout << tmp << " ";
+        count--;
+        one = one >> 1;
+    }
+    cout << endl << endl << ">Value = " << fit << endl << ">Volume = " << v << endl;
 
     infile.close();
     return 0;
