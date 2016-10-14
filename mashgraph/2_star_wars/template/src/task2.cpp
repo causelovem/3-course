@@ -14,6 +14,7 @@
 #define PI 3.1415926535897932384626433832795
 #define EPS 0.001
 #define SEG_NUM 16
+#define BLOCK_SIZE 5
 
 using std::string;
 using std::vector;
@@ -116,17 +117,17 @@ void SavePredictions(const TFileList& file_list,
 // You should implement this function by yourself =)
 void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
 {
-    std::vector<float> segments;
+    std::vector<pair<float, float>> segments;
     segments.resize(SEG_NUM);
 
     int denom = -SEG_NUM / 2, count = 0;
 
     for (int i = denom; i < 0; i++)
-        segments[count++] = i * PI / denom;
+        std::get<0>(segments[count++]) = i * PI / denom;
 
     denom *= -1;
     for (int i = 1; i < denom + 1; i++)
-        segments[count++] = i * PI / denom;
+        std::get<0>(segments[count++]) = i * PI / denom;
 
     Matrix <float> sobel_x(1,3);
     Matrix <float> sobel_y(3,1);
@@ -167,7 +168,7 @@ void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
                 theta(i, j) = (-PI / 2) + (PI / 4) * round((4 / PI) * atan2(Iy(i, j), Ix(i, j)));
             }
 
-
+        
 
 
         
