@@ -94,10 +94,10 @@ uint cross (parents par, uint &quan)
     point = (uint)(rand()) % top + 1;
 
     par.par1 = par.par1 >> point;
-    par.par2 = par.par2 << point;
+    par.par2 = par.par2 << (sizeof(uint) * 8 - point);
 
     par.par1 = par.par1 << point;
-    par.par2 = par.par2 >> point;
+    par.par2 = par.par2 >> (sizeof(uint) * 8 - point);
 
     res = par.par1 | par.par2;
 
