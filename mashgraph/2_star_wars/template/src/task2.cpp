@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <fstream>
 #include <cassert>
 #include <iostream>
@@ -14,7 +15,7 @@
 #define PI 3.1415926535897932384626433832795
 #define EPS 0.001
 #define SEG_NUM 16
-#define BLOCK_SIZE 5
+#define BLOCK_SIZE 10
 
 using std::string;
 using std::vector;
@@ -45,7 +46,7 @@ class UnaryMatrixOp /*+++++*/
 
         float operator () (const Matrix <float> &img)
         {
-            float s = 0;
+            float s = 0.0;
 
             for (size_t i = 0; i < img.n_rows; i++)
                 for (size_t j = 0; j < img.n_cols; j++) 
@@ -113,22 +114,71 @@ void SavePredictions(const TFileList& file_list,
     stream.close();
 }
 
+void LBP (std::vector<float> &descriptor, const Matrix <float> &bright, int block_rows, int block_cols) /*+++++*/
+{
+    Matrix <float> new_bright = bright.deep_copy();
+
+    new_bright = new_bright.extra_borders(1, 1);
+
+    /*CELL COMPUTUNG*/
+    std::vector<std::vector<float>> tmp_descriptor;
+    for (uint i = 1; i < new_bright.n_rows - 1; i += block_rows)
+    {
+        for (uint j = 1; j < new_bright.n_cols - 1; j += block_cols)
+        {
+            uint min_r = std::min(new_bright.n_rows, i + block_rows);
+            uint min_c = std::min(new_bright.n_cols, j + block_cols);
+            std::vector<float> one_image_features;
+            one_image_features.resize(256);
+            for (uint s = 0; s < one_image_features.size(); s++)
+                one_image_features[s] = 0;
+
+            for (uint k = i; k < min_r; k++)
+            {
+                for (uint l = j; l < min_c; l++)
+                {
+                    int num = 0;
+
+                    num += (1 << 7) * (new_bright(k - 1, l - 1) >= new_bright(k, l));
+                    num += (1 << 6) * (new_bright(k - 1, l - 0) >= new_bright(k, l));
+                    num += (1 << 5) * (new_bright(k - 1, l + 1) >= new_bright(k, l));
+                    num += (1 << 4) * (new_bright(k - 0, l + 1) >= new_bright(k, l));
+                    num += (1 << 3) * (new_bright(k + 1, l + 1) >= new_bright(k, l));
+                    num += (1 << 2) * (new_bright(k + 1, l - 0) >= new_bright(k, l));
+                    num += (1 << 1) * (new_bright(k + 1, l - 1) >= new_bright(k, l));
+                    num += (1 << 0) * (new_bright(k - 0, l - 1) >= new_bright(k, l));
+                    one_image_features[num]++;
+                }
+            }
+            tmp_descriptor.push_back(one_image_features);
+        }
+    }
+
+    /*NORM*/
+    size_t size = tmp_descriptor.size();
+    for (size_t i = 0; i < size; i++)
+    {
+        float sum = 0.0;
+        for (size_t j = 0; j < tmp_descriptor[i].size(); j++)
+            sum += tmp_descriptor[i][j] * tmp_descriptor[i][j];
+        
+        if ((sum = sqrt(sum)) > EPS)
+            for (size_t j = 0; j < tmp_descriptor[i].size(); j++)
+                tmp_descriptor[i][j] /= sum;
+    }
+
+    /*MERGE*/
+    for (size_t i = 0; i < size; i++)
+        for (size_t j = 0; j < tmp_descriptor[i].size(); j++)
+            descriptor.push_back(tmp_descriptor[i][j]);
+
+    return;
+}
+
 // Exatract features from dataset.
 // You should implement this function by yourself =)
 void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
 {
-    std::vector<pair<float, float>> segments;
-    segments.resize(SEG_NUM);
-
-    int denom = -SEG_NUM / 2, count = 0;
-
-    for (int i = denom; i < 0; i++)
-        std::get<0>(segments[count++]) = i * PI / denom;
-
-    denom *= -1;
-    for (int i = 1; i < denom + 1; i++)
-        std::get<0>(segments[count++]) = i * PI / denom;
-
     Matrix <float> sobel_x(1,3);
     Matrix <float> sobel_y(3,1);
 
@@ -136,9 +186,9 @@ void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
     sobel_x(0, 1) = 0;
     sobel_x(0, 2) = 1.0;
 
-    sobel_x(0, 0) = -1.0;
-    sobel_x(1, 0) = 0;
-    sobel_x(2, 0) = 1.0;
+    sobel_y(0, 0) = -1.0;
+    sobel_y(1, 0) = 0;
+    sobel_y(2, 0) = 1.0;
 
     for (size_t image_idx = 0; image_idx < data_set.size(); image_idx++)
     {
@@ -146,9 +196,9 @@ void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
         img = std::get<0>(data_set[image_idx]);
         Matrix <float> bright(img->TellHeight(), img->TellWidth());
 
-        for (int i = 0; i < img->TellHeight(); i++)
-            for (int j = 0; j < img->TellWidth(); j++)
-                bright(i,j) = 0.299 * img->GetPixel(i,j).Red + 0.587 * img->GetPixel(i,j).Green + 0.114 * img->GetPixel(i,j).Blue;
+        for (int i = 0; i < img->TellWidth(); i++)
+            for (int j = 0; j < img->TellHeight(); j++)
+                bright(j, i) = 0.299 * img->GetPixel(i, j).Red + 0.587 * img->GetPixel(i, j).Green + 0.114 * img->GetPixel(i, j).Blue;
 
         Matrix <float> Ix(img->TellHeight(), img->TellWidth());
         Matrix <float> Iy(img->TellHeight(), img->TellWidth());
@@ -158,27 +208,87 @@ void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
         Ix = bright.unary_map(opx);
         Iy = bright.unary_map(opy);
 
-        Matrix <float> modG(Ix.n_rows, Ix.n_cols);
-        Matrix <float> theta(Ix.n_rows, Ix.n_cols);
+        Matrix <float> modG(img->TellHeight(), img->TellWidth());
+        Matrix <float> theta(img->TellHeight(), img->TellWidth());
 
         for (size_t i = 0; i < Ix.n_rows; i++)
             for (size_t j = 0; j < Ix.n_cols; j++)
             {
                 modG(i, j) = sqrt (Ix(i, j) * Ix(i, j) + Iy(i, j) * Iy(i, j));
-                theta(i, j) = (-PI / 2) + (PI / 4) * round((4 / PI) * atan2(Iy(i, j), Ix(i, j)));
+                theta(i, j) = atan2f(Iy(i, j), Ix(i, j));
             }
 
-        
+        int block_rows = modG.n_rows / BLOCK_SIZE, block_cols = modG.n_cols / BLOCK_SIZE;
+        int cut_rows = modG.n_rows % BLOCK_SIZE, cut_cols = modG.n_cols % BLOCK_SIZE;
 
+        modG = modG.submatrix(cut_rows / 2, cut_cols / 2, modG.n_rows - cut_rows, modG.n_cols - cut_cols);
+        theta = theta.submatrix(cut_rows / 2, cut_cols / 2, theta.n_rows - cut_rows, theta.n_cols - cut_cols);
+        bright = bright.submatrix(cut_rows / 2, cut_cols / 2, bright.n_rows - cut_rows, bright.n_cols - cut_cols);
 
-        
-        /*// PLACE YOUR CODE HERE
-        // Remove this sample code and place your feature extraction code here
-        vector<float> one_image_features;
-        one_image_features.push_back(1.0);
-        features->push_back(make_pair(one_image_features, 1));
-        // End of sample code*/
+        /*CELL COMPUTUNG*/
+        std::vector<std::vector<float>> tmp_descriptor;
+        for (uint i = 0; i < theta.n_rows; i += block_rows)
+        {
+            for (uint j = 0; j < theta.n_cols; j += block_cols)
+            {
+                uint min_r = std::min(theta.n_rows, i + block_rows);
+                uint min_c = std::min(theta.n_cols, j + block_cols);
+
+                std::vector<float> one_image_features;
+                one_image_features.resize(SEG_NUM);
+                for (uint s = 0; s < one_image_features.size(); s++)
+                    one_image_features[s] = 0;
+
+                for (uint k = i; k < min_r; k++)
+                {
+                    for (uint l = j; l < min_c; l++)
+                    {
+                        int seg = fabsf(theta(k, l)) * (SEG_NUM / 2) / PI;
+                        if (theta(k, l) < 0)
+                        {
+                            if (fabsf(fabsf(theta(k, l)) - PI) < EPS)
+                                one_image_features[0] += modG(k, l);
+                            else
+                                one_image_features[(SEG_NUM / 2) - 1 - seg] += modG(k, l);
+                        }
+                        else
+                        if (theta(k, l) >= 0)
+                        {
+                            if (fabsf(fabsf(theta(k, l)) - PI) < EPS)
+                                one_image_features[one_image_features.size() - 1] += modG(k, l);
+                            else
+                                one_image_features[(SEG_NUM / 2) + seg] += modG(k, l);
+                        }
+                    }
+                }
+                tmp_descriptor.push_back(one_image_features);
+            }
+        }
+
+        /*NORM*/
+        size_t size = tmp_descriptor.size();
+        for (size_t i = 0; i < size; i++)
+        {
+            float sum = 0.0;
+            for (size_t j = 0; j < tmp_descriptor[i].size(); j++)
+                sum += tmp_descriptor[i][j] * tmp_descriptor[i][j];
+            
+            if ((sum = sqrt(sum)) > EPS)
+                for (size_t j = 0; j < tmp_descriptor[i].size(); j++)
+                    tmp_descriptor[i][j] /= sum;
+        }
+
+        /*MERGE*/
+        std::vector<float> descriptor;
+        for (size_t i = 0; i < size; i++)
+            for (size_t j = 0; j < tmp_descriptor[i].size(); j++)
+                descriptor.push_back(tmp_descriptor[i][j]);
+
+        LBP(descriptor, bright, block_rows, block_cols);
+        features->push_back(make_pair(descriptor, std::get<1>(data_set[image_idx])));
     }
+
+    return;
 }
 
 // Clear dataset structure
