@@ -46,13 +46,13 @@ class UnaryMatrixOp /*+++++*/
 
         float operator () (const Matrix <float> &img)
         {
-            float s = 0.0;
+            float sum = 0.0;
 
             for (size_t i = 0; i < img.n_rows; i++)
                 for (size_t j = 0; j < img.n_cols; j++) 
-                    s += img(i, j) * kernel(i, j);
+                    sum += img(i, j) * kernel(i, j);
 
-            return s;
+            return sum;
         }
 };
 
@@ -168,14 +168,15 @@ void LBP (std::vector<float> &descriptor, const Matrix <float> &bright, int bloc
 
 void color_feature (std::vector<float> &descriptor, BMP *img) /*+++++*/
 {
-    int block_rows = img->TellHeight() / 8, block_cols = img->TellWidth() / 8;
-    int cut_rows = img->TellHeight() % 8, cut_cols = img->TellWidth() % 8;
+    int height = img->TellHeight(), width = img->TellWidth();
+    int block_rows = height / 8, block_cols = width / 8;
+    int cut_rows = height % 8, cut_cols = width % 8;
 
     /*CELL COMPUTUNG*/
     std::vector<std::vector<float>> tmp_descriptor;
-    for (int i = cut_rows / 2; i < img->TellHeight() - cut_rows; i += block_rows)
+    for (int i = cut_rows / 2; i < height - cut_rows; i += block_rows)
     {
-        for (int j = cut_cols / 2; j < img->TellWidth() - cut_cols; j += block_cols)
+        for (int j = cut_cols / 2; j < width - cut_cols; j += block_cols)
         {
             std::vector<float> one_image_features;
             one_image_features.resize(3, 0);
@@ -213,7 +214,7 @@ void color_feature (std::vector<float> &descriptor, BMP *img) /*+++++*/
 
 // Exatract features from dataset.
 // You should implement this function by yourself =)
-void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
+void ExtractFeatures(const TDataSet& data_set, TFeatures* features) /*+++++*/
 {
     Matrix <float> sobel_x(1,3);
     Matrix <float> sobel_y(3,1);
@@ -230,22 +231,23 @@ void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
     {
         BMP *img;
         img = std::get<0>(data_set[image_idx]);
-        Matrix <float> bright(img->TellHeight(), img->TellWidth());
+        int height = img->TellHeight(), width = img->TellWidth();
+        Matrix <float> bright(height, width);
 
-        for (int i = 0; i < img->TellWidth(); i++)
-            for (int j = 0; j < img->TellHeight(); j++)
+        for (int i = 0; i < width; i++)
+            for (int j = 0; j < height; j++)
                 bright(j, i) = 0.299 * img->GetPixel(i, j).Red + 0.587 * img->GetPixel(i, j).Green + 0.114 * img->GetPixel(i, j).Blue;
 
-        Matrix <float> Ix(img->TellHeight(), img->TellWidth());
-        Matrix <float> Iy(img->TellHeight(), img->TellWidth());
+        Matrix <float> Ix(height, width);
+        Matrix <float> Iy(height, width);
 
         UnaryMatrixOp opx(sobel_x);
         UnaryMatrixOp opy(sobel_y);
         Ix = bright.unary_map(opx);
         Iy = bright.unary_map(opy);
 
-        Matrix <float> modG(img->TellHeight(), img->TellWidth());
-        Matrix <float> theta(img->TellHeight(), img->TellWidth());
+        Matrix <float> modG(height, width);
+        Matrix <float> theta(height, width);
 
         for (size_t i = 0; i < Ix.n_rows; i++)
             for (size_t j = 0; j < Ix.n_cols; j++)
@@ -317,7 +319,7 @@ void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
 
         LBP(descriptor, bright, block_rows, block_cols);
         color_feature(descriptor, img);
-        
+
         features->push_back(make_pair(descriptor, std::get<1>(data_set[image_idx])));
     }
 
