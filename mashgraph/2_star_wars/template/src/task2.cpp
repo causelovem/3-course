@@ -50,12 +50,7 @@ class UnaryMatrixOp /*+++++*/
 
             for (size_t i = 0; i < img.n_rows; i++)
                 for (size_t j = 0; j < img.n_cols; j++) 
-                    s += img(i,j) * kernel(i,j);
-
-            /*if (s < 0)
-                s = 0;
-            if (s > 255)
-                s = 255;*/
+                    s += img(i, j) * kernel(i, j);
 
             return s;
         }
@@ -126,16 +121,12 @@ void LBP (std::vector<float> &descriptor, const Matrix <float> &bright, int bloc
     {
         for (uint j = 1; j < new_bright.n_cols - 1; j += block_cols)
         {
-            uint min_r = std::min(new_bright.n_rows, i + block_rows);
-            uint min_c = std::min(new_bright.n_cols, j + block_cols);
             std::vector<float> one_image_features;
-            one_image_features.resize(256);
-            for (uint s = 0; s < one_image_features.size(); s++)
-                one_image_features[s] = 0;
+            one_image_features.resize(256, 0);
 
-            for (uint k = i; k < min_r; k++)
+            for (uint k = i; k < i + block_rows; k++)
             {
-                for (uint l = j; l < min_c; l++)
+                for (uint l = j; l < j + block_cols; l++)
                 {
                     int num = 0;
 
@@ -166,6 +157,51 @@ void LBP (std::vector<float> &descriptor, const Matrix <float> &bright, int bloc
             for (size_t j = 0; j < tmp_descriptor[i].size(); j++)
                 tmp_descriptor[i][j] /= sum;
     }
+
+    /*MERGE*/
+    for (size_t i = 0; i < size; i++)
+        for (size_t j = 0; j < tmp_descriptor[i].size(); j++)
+            descriptor.push_back(tmp_descriptor[i][j]);
+
+    return;
+}
+
+void color_feature (std::vector<float> &descriptor, BMP *img) /*+++++*/
+{
+    int block_rows = img->TellHeight() / 8, block_cols = img->TellWidth() / 8;
+    int cut_rows = img->TellHeight() % 8, cut_cols = img->TellWidth() % 8;
+
+    /*CELL COMPUTUNG*/
+    std::vector<std::vector<float>> tmp_descriptor;
+    for (int i = cut_rows / 2; i < img->TellHeight() - cut_rows; i += block_rows)
+    {
+        for (int j = cut_cols / 2; j < img->TellWidth() - cut_cols; j += block_cols)
+        {
+            std::vector<float> one_image_features;
+            one_image_features.resize(3, 0);
+
+            for (int k = i; k < i + block_rows; k++)
+            {
+                for (int l = j; l < j + block_cols; l++)
+                {
+                    one_image_features[0] += img->GetPixel(l, k).Red;
+                    one_image_features[1] += img->GetPixel(l, k).Green;
+                    one_image_features[2] += img->GetPixel(l, k).Blue;
+                }
+            }
+            one_image_features[0] /= 64;
+            one_image_features[1] /= 64;
+            one_image_features[2] /= 64;
+
+            tmp_descriptor.push_back(one_image_features);
+        }
+    }
+
+    /*NORM*/
+    size_t size = tmp_descriptor.size();
+    for (size_t i = 0; i < size; i++)      
+        for (size_t j = 0; j < tmp_descriptor[i].size(); j++)
+            tmp_descriptor[i][j] /= 255;
 
     /*MERGE*/
     for (size_t i = 0; i < size; i++)
@@ -231,17 +267,12 @@ void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
         {
             for (uint j = 0; j < theta.n_cols; j += block_cols)
             {
-                uint min_r = std::min(theta.n_rows, i + block_rows);
-                uint min_c = std::min(theta.n_cols, j + block_cols);
-
                 std::vector<float> one_image_features;
-                one_image_features.resize(SEG_NUM);
-                for (uint s = 0; s < one_image_features.size(); s++)
-                    one_image_features[s] = 0;
+                one_image_features.resize(SEG_NUM, 0);
 
-                for (uint k = i; k < min_r; k++)
+                for (uint k = i; k < i + block_rows; k++)
                 {
-                    for (uint l = j; l < min_c; l++)
+                    for (uint l = j; l < j + block_cols; l++)
                     {
                         int seg = fabsf(theta(k, l)) * (SEG_NUM / 2) / PI;
                         if (theta(k, l) < 0)
@@ -285,6 +316,8 @@ void ExtractFeatures(const TDataSet& data_set, TFeatures* features)
                 descriptor.push_back(tmp_descriptor[i][j]);
 
         LBP(descriptor, bright, block_rows, block_cols);
+        color_feature(descriptor, img);
+        
         features->push_back(make_pair(descriptor, std::get<1>(data_set[image_idx])));
     }
 
