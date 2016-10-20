@@ -279,7 +279,7 @@ void ExtractFeatures(const TDataSet& data_set, TFeatures* features) /*+++++*/
                         int seg = fabsf(theta(k, l)) * (SEG_NUM / 2) / PI;
                         if (theta(k, l) < 0)
                         {
-                            if (fabsf(fabsf(theta(k, l)) - PI) < EPS)
+                            if (fabs(fabsf(theta(k, l)) - PI) < EPS)
                                 one_image_features[0] += modG(k, l);
                             else
                                 one_image_features[(SEG_NUM / 2) - 1 - seg] += modG(k, l);
@@ -287,7 +287,7 @@ void ExtractFeatures(const TDataSet& data_set, TFeatures* features) /*+++++*/
                         else
                         if (theta(k, l) >= 0)
                         {
-                            if (fabsf(fabsf(theta(k, l)) - PI) < EPS)
+                            if (fabs(fabsf(theta(k, l)) - PI) < EPS)
                                 one_image_features[one_image_features.size() - 1] += modG(k, l);
                             else
                                 one_image_features[(SEG_NUM / 2) + seg] += modG(k, l);
