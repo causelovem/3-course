@@ -1,9 +1,20 @@
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
+#import scipy as sc
 
 
-def explicit_metod(data, num, dist, a, step, fin):
+#def slau(matrixA, matrixB, res):
+#    res = sc.solve(matrixA. matrixB)
+#    return
+
+
+def reverse_metod(data, num, dist, a, step, fin):
+    
+    return
+
+
+def evident_metod(data, num, dist, a, step, fin):
     for i in range(1, data.shape[0]):
         data[i][0] = data[i - 1][0]
         data[i][num - 1] = data[i - 1][num - 1]
@@ -23,6 +34,7 @@ def plot(data, step):
         plt.grid(True)
         plt.pause(0.1)
 #        plt.clf()
+# Uncomment code string above to draw different plots
 
     plt.show(block=True)
     return
@@ -50,7 +62,7 @@ data = np.zeros((fin, num))
 for i in range(data.shape[1]):
     data[0][i] = float(tmp[i])
 
-explicit_metod(data, num, dist, a, step, fin)
+evident_metod(data, num, dist, a, step, fin)
 plot(data, step)
 
 in_file.close()
