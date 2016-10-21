@@ -10,7 +10,6 @@ import numpy as np
 
 
 def reverse_metod(data, num, dist, a, step, fin):
-    
     return
 
 
