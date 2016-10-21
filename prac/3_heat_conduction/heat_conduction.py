@@ -24,13 +24,15 @@ def reverse_metod(data, num, dist, a, t):
 
 
 def evident_metod(data, num, dist, a, t):
+    tmp = t * a / dist
     for i in range(1, data.shape[0]):
         data[i][0] = data[i - 1][0]
         data[i][num - 1] = data[i - 1][num - 1]
         for j in range(1, data.shape[1] - 1):
             point = (data[i - 1][j + 1] + data[i - 1][j - 1])
             point = point - 2 * data[i - 1][j]
-            data[i][j] = t * a * point / dist + data[i - 1][j]
+            data[i][j] = tmp * point + data[i - 1][j]
+
     return
 
 
@@ -42,7 +44,7 @@ def plot(data):
         plt.title('Temperature_changes')
         plt.grid(True)
         plt.pause(0.1)
-#        plt.clf()
+#         plt.clf()
 # Uncomment code string above to draw different plots
     plt.show(block=True)
     return
@@ -60,10 +62,15 @@ tmp = file[0].split()
 
 num = int(tmp[0])
 dist = float(tmp[1])
-dist = dist ** 2
 a = float(tmp[2])
 t = float(tmp[3])
 fin = int(tmp[4])
+
+# if t >= (dist ** 2) / (2 * a):
+#     print ">Your TAU >= (h ** 2) / (2 * a); It changed to (0.25 * h) / a"
+#     t = (0.25 * dist) / a
+
+dist = dist ** 2
 
 tmp = file[1].split()
 data = np.zeros((fin, num))
@@ -71,8 +78,11 @@ data = np.zeros((fin, num))
 for i in range(data.shape[1]):
     data[0][i] = float(tmp[i])
 
-# evident_metod(data, num, dist, a, t)
-reverse_metod(data, num, dist, a, t)
-plot(data, t)
+if int(sys.argv[2]) == 1:
+    evident_metod(data, num, dist, a, t)
+else:
+    reverse_metod(data, num, dist, a, t)
+
+plot(data)
 
 in_file.close()
