@@ -6,6 +6,7 @@ import numpy as np
 
 #def slau(matrixA, matrixB, res):
 #    res = sc.solve(matrixA. matrixB)
+#
 #    return
 
 
