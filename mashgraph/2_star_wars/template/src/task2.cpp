@@ -190,9 +190,9 @@ void color_feature (std::vector<float> &descriptor, BMP *img) /*+++++*/
                     one_image_features[2] += img->GetPixel(l, k).Blue;
                 }
             }
-            one_image_features[0] /= 64;
-            one_image_features[1] /= 64;
-            one_image_features[2] /= 64;
+            one_image_features[0] /= block_rows * block_cols;
+            one_image_features[1] /= block_rows * block_cols;
+            one_image_features[2] /= block_rows * block_cols;
 
             tmp_descriptor.push_back(one_image_features);
         }
