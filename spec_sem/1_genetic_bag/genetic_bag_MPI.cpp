@@ -111,6 +111,12 @@ uint cross (parents par, uint &quan)
 
 void selection (const vector< item > &items, vector<generation> &generat, const int &volume)
 {
+    int nProc, myRank, root = 0, tag = 0;
+    MPI_Status status;
+
+    MPI_Comm_size(MPI_COMM_WORLD, &nProc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+
     vector<parents> parent;
     uint quan = items.size();
 
@@ -165,13 +171,8 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
-    srand(time(0));
-    int nProc, myRank, root = 0, tag = 0;
-    MPI_Status status;
-
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &nProc);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+    srand(time(0));
 
     int volume = 0;
     int quan = 0;
