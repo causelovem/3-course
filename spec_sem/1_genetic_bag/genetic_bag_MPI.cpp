@@ -111,11 +111,10 @@ uint cross (parents par, uint &quan)
 
 void selection (const vector< item > &items, vector<generation> &generat, const int &volume)
 {
-    int nProc, myRank, root = 0, tag = 0;
+    /*int nProc, myRank, root = 0, tag = 0;
     MPI_Status status;
 
-    MPI_Comm_size(MPI_COMM_WORLD, &nProc);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nProc);*/
 
     vector<parents> parent;
     uint quan = items.size();
@@ -124,6 +123,21 @@ void selection (const vector< item > &items, vector<generation> &generat, const 
 
     for (uint i = 0; i < GEN_END; i++)
     {
+        /*MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+        int count = GEN_BEGIN / nProc;
+        int step = 0;
+        if (myRank == root)
+        {
+            std::vector<generation> tmp(count);
+            for (uint j = step; j < step + count; j++)
+                tmp.push_back(generat[j]);
+            step += count;
+
+            for (uint j = 1; j < nProc; j++)
+                MPI_Send(&tmp, count, generation, j, tag, MPI_COMM_WORLD);
+            
+        }*/
+
         for (uint j = 0; j < GEN_BEGIN; j++)
             generat[j].gen_fit = fitness(generat[j], items, volume);
         sort(generat.begin(), generat.end(), comp);
@@ -156,7 +170,7 @@ void selection (const vector< item > &items, vector<generation> &generat, const 
     return;
 }
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
@@ -171,7 +185,7 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
-    MPI_Init(&argc, &argv);
+    /*MPI_Init(&argc, &argv);*/
     srand(time(0));
 
     int volume = 0;
