@@ -82,14 +82,14 @@ int main(int argc, char *argv[])
 
         int num = (right - fin ) / (nProc - 1);
 
-        range[0] = fin;
-        range[1] = fin + num;
+        range[0] = fin - 1;
+        range[1] = fin + num - 1;
         for (int i = 1; i < nProc; i++)
         {   
             MPI_Send(&range, 2, MPI_UNSIGNED, i, tag, MPI_COMM_WORLD);
 
-            range[0] = range[1];
-            range[1] += num;
+            range[0] = range[1] + 1;
+            range[1] += num + 1;
         }
 
         for (int i = 1; i < nProc; i++)
