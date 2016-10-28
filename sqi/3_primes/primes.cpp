@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
 
         uint res_num = 0;
 
+        float x = (float)clock();
         bool *primes = new bool [right + 1];
 
         primes[0] = primes[1] = 0;
@@ -70,12 +71,6 @@ int main(int argc, char *argv[])
             if (primes[i] == 1)
                 tmp[cnt++] = i;
 
-        for (uint i = 0; i < count; i++)
-        {
-            outfile << tmp[i] << endl;
-            res_num++;
-        }
-
         MPI_Bcast(&count, 1, MPI_UNSIGNED, root, MPI_COMM_WORLD);
 
         MPI_Bcast(tmp, count, MPI_UNSIGNED, root, MPI_COMM_WORLD);
@@ -92,6 +87,13 @@ int main(int argc, char *argv[])
             range[1] += num + 1;
         }
 
+        for (uint i = 2; i < right + 1; i++)
+            primes[i] = 0;
+
+
+        for (uint i = 0; i < count; i++)
+            primes[tmp[i]] =1;
+
         for (int i = 1; i < nProc; i++)
         {
             uint num = 0;
@@ -102,12 +104,20 @@ int main(int argc, char *argv[])
             MPI_Recv(primes_out, num, MPI_UNSIGNED, i, tag, MPI_COMM_WORLD, &status);
 
             for (uint j = 0; j < num; j++)
-            {
-                outfile << primes_out[j] << endl;
-                res_num++;
-            }
+                primes[primes_out[j]] = 1;
 
             delete [] primes_out;
+        }
+
+        cout << ">Time of computation = " <<((float)clock() - x) / CLOCKS_PER_SEC << endl;
+
+        for (uint i = left; i < right + 1; i++)
+        {
+            if (primes[i] == 1)
+            {
+                outfile << i << endl;
+                res_num++;
+            }
         }
 
         cout << ">Number of prime numbers = " << res_num << endl;
