@@ -9,8 +9,8 @@
 #include <vector>
 #include <algorithm>
 
-#define GEN_BEGIN 300
-#define GEN_END 1000
+#define GEN_BEGIN 1000
+#define GEN_END 2000
 #define PERS 0.3
 #define MUT_PERS 3
 #define EXCHANGE 10
@@ -322,6 +322,21 @@ int main(int argc, char *argv[])
             generat[i].gen = (int)(rand()) % top + 1;
 
         selection(items, generat, volume, (myRank + 1) % nProc, myRank - 1);
+
+        /*uint one = 1 << (quan - 1), count = quan - 1;
+        uint tmp = 0, fit = 0, v = 0, res = generat[GEN_BEGIN - 1].gen;
+
+        for (int i = quan - 1; i > -1; i--)
+        {
+            tmp = res & one;
+            tmp = tmp >> count;
+            fit +=  tmp * items[quan - 1 - i].val;
+            v += tmp * items[quan - 1 - i].vol;
+            cout << tmp << " ";
+            count--;
+            one = one >> 1;
+        }
+        cout << endl;*/
 
         MPI_Send(&generat[GEN_BEGIN - 1].gen, 1, MPI_UNSIGNED, root, tag, MPI_COMM_WORLD);
     }

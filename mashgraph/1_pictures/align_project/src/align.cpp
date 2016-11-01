@@ -676,66 +676,6 @@ Image canny(Image src_image, int threshold1, int threshold2) /*+++++*/
         }
 
     /*FIND BORDERS*/
-    /*for (uint i = 1; i < Ix.n_rows - 1; i++)
-        for (uint j = 1; j < Ix.n_cols - 1; j++)
-            if (border_map(i, j) == 255)
-            {
-                if (border_map(i, j + 1) == 128)
-                    border_map(i, j + 1) = 255;
-
-                if (border_map(i - 1, j + 1) == 128)
-                    border_map(i - 1, j + 1) = 255;
-
-                if (border_map(i - 1, j) == 128)
-                    border_map(i - 1, j) = 255;
-
-                if (border_map(i - 1, j - 1) == 128)
-                    border_map(i - 1, j - 1) = 255;
-
-                if (border_map(i, j - 1) == 128)
-                    border_map(i, j - 1) = 255;
-
-                if (border_map(i + 1, j - 1) == 128)
-                    border_map(i + 1, j - 1) = 255;
-
-                if (border_map(i + 1, j) == 128)
-                    border_map(i + 1, j) = 255;
-
-                if (border_map(i + 1, j + 1) == 128)
-                    border_map(i + 1, j + 1) = 255;
-            }
-
-    for (uint i = Ix.n_rows - 2; i > 0; i--)
-        for (uint j = Ix.n_cols - 2; j > 0; j--)
-            if (border_map(i, j) == 255)
-            {
-                if (border_map(i, j + 1) == 128)
-                    border_map(i, j + 1) = 255;
-
-                if (border_map(i - 1, j + 1) == 128)
-                    border_map(i - 1, j + 1) = 255;
-
-                if (border_map(i - 1, j) == 128)
-                    border_map(i - 1, j) = 255;
-
-                if (border_map(i - 1, j - 1) == 128)
-                    border_map(i - 1, j - 1) = 255;
-
-                if (border_map(i, j - 1) == 128)
-                    border_map(i, j - 1) = 255;
-
-                if (border_map(i + 1, j - 1) == 128)
-                    border_map(i + 1, j - 1) = 255;
-
-                if (border_map(i + 1, j) == 128)
-                    border_map(i + 1, j) = 255;
-
-                if (border_map(i + 1, j + 1) == 128)
-                    border_map(i + 1, j + 1) = 255;
-            }
-            else
-                border_map(i, j) = 0;*/
-
     std::vector<tuple<uint, uint>> white_points;
     std::vector<tuple<uint, uint>> gray_points;
     Matrix<uint> border_map_new(Ix.n_rows, Ix.n_cols);
