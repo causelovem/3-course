@@ -90,9 +90,8 @@ int main(int argc, char *argv[])
         for (uint i = 2; i < right + 1; i++)
             primes[i] = 0;
 
-
         for (uint i = 0; i < count; i++)
-            primes[tmp[i]] =1;
+            primes[tmp[i]] = 1;
 
         for (int i = 1; i < nProc; i++)
         {
