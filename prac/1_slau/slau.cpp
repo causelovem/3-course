@@ -59,7 +59,7 @@ int main(int argc, char const *argv[])
     {
         for (int j = 0; j <  number_of_variable; j++)
         {
-            cout << matrix[i][j] << "*x" << j;
+            cout << matrix[i][j] << "*x" << j + 1;
             if (j != number_of_variable - 1)
                 cout << " + ";
         }

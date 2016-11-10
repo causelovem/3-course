@@ -98,17 +98,21 @@ void yakobi (double **&matrix, int size, ofstream &out_file)
         if (fabs(max_num) < eps)
             break;
 
-        tmp = 2 * matrix[row][col] / (matrix[row][row] - matrix[col][col]);
-
-        rsin = (tmp / fabs(tmp)) * sqrt((0.5) * (1.0 - 1.0 / (sqrt(1.0 + tmp * tmp))));
-        rcos = sqrt((0.5) * (1.0 + 1.0 / (sqrt(1.0 + tmp * tmp))));
-
         for (int i = 0; i < size; i++)
         {
             for (int j = 0; j < size; j++)
                 rot_matrix[i][j] = 0;
             rot_matrix[i][i] = 1;
         }
+
+        if (matrix[row][row] != matrix[col][col])
+        {
+            tmp = 2 * matrix[row][col] / (matrix[row][row] - matrix[col][col]);
+            rsin = (tmp / fabs(tmp)) * sqrt((0.5) * (1.0 - 1.0 / (sqrt(1.0 + tmp * tmp))));
+            rcos = sqrt((0.5) * (1.0 + 1.0 / (sqrt(1.0 + tmp * tmp))));
+        }
+        else
+            rsin = rcos =  1.0 / sqrt(2.0);
 
         rot_matrix[row][row] = rcos;
         rot_matrix[row][col] = -rsin;
