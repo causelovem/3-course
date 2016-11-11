@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 
         double num;
         uint row = 0, col = 0;
-        std::vector<double> tmp_vec;
+        std::vector < double > tmp_vec;
 
         fileA >> row;
         fileA >> col;
@@ -73,18 +73,22 @@ int main(int argc, char *argv[])
             tmp_vec.clear();
         }
 
+        std::vector < double > result(row);
+        uint tmp_col = col;
+
         fileB >> col;
         std::vector < double > matrixB(col);
 
         for (uint i = 0; i < col; i++)
             fileB >> matrixB[i];
 
-        if (col != row)
+        if (col != tmp_col)
         {
             cerr << ">Matrix and vector sizes are not comply with." << endl;
             fileA.close();
             fileB.close();
             fileC.close();
+            MPI_Finalize();
             return -1;
         }
 
@@ -94,6 +98,7 @@ int main(int argc, char *argv[])
             fileA.close();
             fileB.close();
             fileC.close();
+            MPI_Finalize();
             return -1;
         }
 
@@ -134,15 +139,13 @@ int main(int argc, char *argv[])
             MPI_Send(vectorB, col, MPI_DOUBLE, nProc - 1, tag, MPI_COMM_WORLD);
         }
 
-        fileC << row << "\n";
-
+        int res_count = 0;
         for (uint i = 0; i < div; i++)
         {
             double res = 0;
             for (uint j = 0; j < col; j++)
                 res += matrixA[i][j] * matrixB[j];
-
-            fileC << res << " ";
+            result[res_count++] = res;
         }
 
         double *tmp = new double [div];
@@ -151,13 +154,18 @@ int main(int argc, char *argv[])
         {
             MPI_Recv(tmp, div, MPI_DOUBLE, i, tag, MPI_COMM_WORLD, &status);
             for (uint j = 0; j < div; j++)
-                fileC << tmp[j] << " ";
+                result[res_count++] = tmp[j];
         }
 
         double *send_vec = new double [send_val];
         MPI_Recv(send_vec, send_val, MPI_DOUBLE, nProc - 1, tag, MPI_COMM_WORLD, &status);
+
         for (uint j = 0; j < send_val; j++)
-            fileC << send_vec[j] << " ";
+            result[res_count++] = send_vec[j];
+
+        fileC << row << "\n";
+        for (uint i = 0; i < row; i++)
+            fileC << result[i] << " ";
 
         fileA.close();
         fileB.close();
@@ -178,23 +186,29 @@ int main(int argc, char *argv[])
         MPI_Recv(&div, 1, MPI_INT, root, tag, MPI_COMM_WORLD, &status);
 
         double *res = new double [div];
-        double *tmp = new double [col];
+        double **tmp = new double* [div];
+
+        for (uint i = 0; i < div; i++)
+        {
+            tmp[i] = new double [col];
+            MPI_Recv(tmp[i], col, MPI_DOUBLE, root, tag, MPI_COMM_WORLD, &status);
+        }
 
         for (uint i = 0; i < div; i++)
             res[i] = 0;
 
         for (uint i = 0; i < div; i++)
-        {
-            MPI_Recv(tmp, col, MPI_DOUBLE, root, tag, MPI_COMM_WORLD, &status);
-
             for (uint j = 0; j < col; j++)
-                res[i] += tmp[j] * matrixB[j];
-        }
+                res[i] += tmp[i][j] * matrixB[j];
 
         MPI_Send(res, div, MPI_DOUBLE, root, tag, MPI_COMM_WORLD);
 
         delete [] matrixB;
         delete [] res;
+
+        for (uint i = 0; i < div; i++)
+            delete [] tmp[i];
+
         delete [] tmp;
     }
     
