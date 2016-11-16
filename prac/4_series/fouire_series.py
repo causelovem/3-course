@@ -3,16 +3,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot(data, a, eps):
+def func(x):
+    # return math.exp(x)
+    # return math.sin(x)
+    # return math.cos(x)
+    return math.sin(x ** 2 + 3)
+
+
+def plot(data, eps):
     plt.figure()
     plt.ion()
-    cords = np.arange(a - eps / 2, a + eps / 2, eps / data.shape[1])
+    cords = np.arange(-eps, eps, 2 * eps / data.shape[1])
     for i in range(data.shape[0]):
         plt.title('Aproximation Fouire')
-        plt.xlim(a - eps / 2, a + eps / 2)
+        plt.xlim(-eps, eps)
         plt.ylim(data.min(), data.max())
         # Asixs
-        plt.plot([a - eps / 2, a + eps / 2], [0, 0], 'k-', lw=1)
+        plt.plot([-eps, eps], [0, 0], 'k-', lw=1)
         plt.plot([0, 0], [data.min(), data.max()], 'k-', lw=1)
         # Func
         plt.plot(cords, data[0])
@@ -26,41 +33,49 @@ def plot(data, a, eps):
     return
 
 
-def taylor(data, xcord, a):
-    # function e ^ x
-    # function 2 ^ x
-    # function sin x
+def integralAn(eps, n):
+    sum = 0.0
+    step = (2 * eps) / point_num
+    for x in range(0, xcord.shape[0]):
+        sum += func(xcord[x]) * math.cos(math.pi * n * xcord[x] / eps) * step
 
-    for i in range(2, data.shape[0]):
-        factor = math.factorial(i - 1)
-        # deriv = math.exp(a) / factor
-        # deriv = (2 ** a) * (math.log(2) ** (i - 1)) / factor
-        deriv = math.sin(a + (math.pi * (i - 1)) / 2) / factor
-        for x in range(0, data.shape[1]):
-            derivative[i][x] = derivative[i - 1][x] + deriv * ((xcord[x] - a) ** (i - 1))
+    return sum / eps
 
 
-a = 0.0
+def integralBn(eps, n):
+    sum = 0.0
+    step = (2 * eps) / point_num
+    for x in range(0, xcord.shape[0]):
+        sum += func(xcord[x]) * math.sin(math.pi * n * xcord[x] / eps) * step
+
+    return sum / eps
+
+
+def fouire(derivative, eps):
+    for i in range(2, derivative.shape[0]):
+        for x in range(0, derivative.shape[1]):
+            an = integralAn(eps, (i - 1)) * math.cos(math.pi * (i - 1) * xcord[x] / eps)
+            bn = integralBn(eps, (i - 1)) * math.sin(math.pi * (i - 1) * xcord[x] / eps)
+            derivative[i][x] = derivative[i - 1][x] + an + bn
+
+
 eps = 5.0
+# point_num = 2 * int(eps) * 100
 point_num = 100
-der_num = 11
+der_num = 51
 derivative = np.zeros((der_num, point_num))
 xcord = np.zeros(point_num)
 
-step = a - eps / 2
+step = -eps
 
 for x in range(0, point_num):
     xcord[x] = step
-    step += eps / point_num
+    step += (2 * eps) / point_num
 
 for x in range(0, point_num):
-    # derivative[0][x] = math.exp(xcord[x])
-    # derivative[1][x] = math.exp(a)
-    # derivative[0][x] = 2 ** xcord[x]
-    # derivative[1][x] = 2 ** a
-    derivative[0][x] = math.sin(xcord[x])
-    derivative[1][x] = math.sin(a)
+    derivative[0][x] = func(xcord[x])
+    derivative[1][x] = integralAn(eps, 0) / 2
 
-taylor(derivative, xcord, a)
+fouire(derivative, eps)
 
-plot(derivative, a, eps)
+plot(derivative, eps)

@@ -76,9 +76,9 @@ if len(sys.argv) != 2:
     print ">Unexpected quantity of arguments, check your comand string.\n"
     exit(-1)
 
-num = float(100)
+num = float(50)
 # dist = float(0.1)
-dist = float((3 - 0) / num)
+dist = float((10 - 0) / num)
 print dist
 a = float(100)
 t = float(0.01)
