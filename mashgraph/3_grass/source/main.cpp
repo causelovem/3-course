@@ -1,12 +1,11 @@
 #include <iostream>
 #include <vector>
-#include <stdlib.h>
 
 #include "Utility.h"
 
 using namespace std;
 
-const uint GRASS_INSTANCES = 16; // Количество травинок
+const uint GRASS_INSTANCES = 1000; // Количество травинок
 
 GL::Camera camera;               // Мы предоставляем Вам реализацию камеры. В OpenGL камера - это просто 2 матрицы. Модельно-видовая матрица и матрица проекции. // ###
                                  // Задача этого класса только в том чтобы обработать ввод с клавиатуры и правильно сформировать эти матрицы.
@@ -68,7 +67,6 @@ void UpdateGrassVariance() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);                                            CHECK_GL_ERRORS
 }
 
-
 // Рисование травы
 void DrawGrass() {
     // Тут то же самое, что и в рисовании земли
@@ -91,8 +89,8 @@ void RenderLayouts() {
     // Очистка буфера глубины и цветового буфера
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Рисуем меши
-    DrawGrass();
     DrawGround();
+    DrawGrass();  
     glutSwapBuffers();
 }
 
@@ -168,7 +166,6 @@ void InitializeGLUT(int argc, char **argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
     glutInitContextVersion(3, 0);
-    glutInitContextProfile(GLUT_CORE_PROFILE);
     glutInitWindowPosition(-1, -1);
     glutInitWindowSize(screenWidth, screenHeight);
     glutCreateWindow("Computer Graphics 3");
@@ -188,7 +185,8 @@ void InitializeGLUT(int argc, char **argv) {
 vector<VM::vec2> GenerateGrassPositions() {
     vector<VM::vec2> grassPositions(GRASS_INSTANCES);
     for (uint i = 0; i < GRASS_INSTANCES; ++i) {
-        grassPositions[i] = VM::vec2((i % 4) / 4.0, (i / 4) / 4.0) + VM::vec2(1, 1) / 8;
+        //grassPositions[i] = VM::vec2((i % 4) / 4.0, (i / 4) / 4.0) + VM::vec2(1, 1) / 8;
+        grassPositions[i] = VM::vec2((float)rand() / RAND_MAX, (float)rand() / RAND_MAX) ;
     }
     return grassPositions;
 }
@@ -196,9 +194,35 @@ vector<VM::vec2> GenerateGrassPositions() {
 // Здесь вам нужно будет генерировать меш
 vector<VM::vec4> GenMesh(uint n) {
     return {
+        /*VM::vec4(0, 0, 0, 1),
+        VM::vec4(1, 0, 0, 1),
+        VM::vec4(0.5, 1, 0, 1),*/
+
+        // 1 tringle
         VM::vec4(0, 0, 0, 1),
         VM::vec4(1, 0, 0, 1),
-        VM::vec4(0.5, 1, 0, 1),
+        VM::vec4(1, 1.0 / 3.0, 0, 1),
+
+        // 2 tringle
+        VM::vec4(0, 0, 0, 1),
+        VM::vec4(0, 1.0 / 3.0, 0, 1),
+        VM::vec4(1, 1.0 / 3.0, 0, 1),
+
+        // 3 tringle
+        VM::vec4(0, 1.0 / 3.0, 0, 1),
+        VM::vec4(1, 1.0 / 3.0, 0, 1),
+        VM::vec4(17.0 / 20.0, 2.0 / 3.0, 0, 1),
+
+        // 4 tringle
+        VM::vec4(0, 1.0 / 3.0, 0, 1),
+        VM::vec4(3.0 / 20.0, 2.0 / 3.0, 0, 1),
+        VM::vec4(17.0 / 20.0, 2.0 / 3.0, 0, 1),
+
+        // 5 tringle
+        VM::vec4(3.0 / 20.0, 2.0 / 3.0, 0, 1),
+        VM::vec4(17.0 / 20.0, 2.0 / 3.0, 0, 1),
+        VM::vec4(1.0 / 2.0, 1, 0, 1),
+
     };
 }
 

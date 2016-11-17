@@ -7,10 +7,10 @@ LOCAL = /usr/local
 LIB = libSOIL.a
 INC = SOIL.h
 
-SRCDIR = src
-LIBDIR = lib
-INCDIR = src
-OBJDIR = obj
+SRCDIR = ../../src
+LIBDIR = ../../lib
+INCDIR = ../../src
+OBJDIR = ../../obj
 
 CXX = gcc
 CXXFLAGS = -O2 -s -Wall
@@ -26,11 +26,7 @@ SRCNAMES = \
 OBJ = $(addprefix $(OBJDIR)/, $(notdir $(SRCNAMES:.c=.o)))
 BIN = $(LIBDIR)/$(LIB)
 
-all: directories $(BIN) post_install
-
-directories:
-	mkdir -p obj
-	mkdir -p lib
+all: $(BIN)
 
 $(BIN): $(OBJ)
 	ar r $(BIN) $(OBJ)
@@ -39,25 +35,21 @@ $(BIN): $(OBJ)
 	@echo Done. As root, type 'make install' to install the library.
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
+	mkdir -p $(OBJDIR)
+	mkdir -p $(LIBDIR)
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 
 clean:
 	$(DELETER) $(OBJ) $(BIN)
-	rm -rf obj
-	rm -rf lib
 
-install: $(BIN) post_install
+install: $(BIN)
 	@echo Installing to: $(LOCAL)/lib and $(LOCAL)/include...
 	@echo -------------------------------------------------------------------
 	$(COPIER) $(BIN) $(LOCAL)/lib
 	$(COPIER) $(INCDIR)/$(INC) $(LOCAL)/include
 	@echo -------------------------------------------------------------------
 	@echo SOIL library installed. Enjoy!
-
-post_install:
-	chmod -R 777 $(OBJDIR)
-	chmod -R 777 $(LIBDIR)
 
 uninstall:
 	$(DELETER) $(LOCAL)/include/$(INC) $(LOCAL)/lib/$(LIB)

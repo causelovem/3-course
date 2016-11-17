@@ -7,7 +7,14 @@ def func(x):
     # return math.exp(x)
     # return math.sin(x)
     # return math.cos(x)
-    return math.sin(x ** 2 + 3)
+    # return math.sin(x ** 2 + 3)
+    # return math.sin(3 * x) - 5 * math.sin(2 * x / 3)
+    # return x
+    # return math.sqrt(1 - x ** 2)
+    # return (x ** 3 + 4 * (x ** 2) + 7)
+    # return math.exp(- 1 / (x ** 2))
+    # return math.sin(1 / x)
+    return math.sin(math.log(math.fabs(x)))
 
 
 def plot(data, eps):
@@ -60,7 +67,6 @@ def fouire(derivative, eps):
 
 
 eps = 5.0
-# point_num = 2 * int(eps) * 100
 point_num = 100
 der_num = 51
 derivative = np.zeros((der_num, point_num))
