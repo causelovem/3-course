@@ -4,9 +4,9 @@ import numpy as np
 
 
 def func(x):
-    # return math.exp(x)
+    return math.exp(x)
     # return 2 ** x
-    return math.sin(x)
+    # return math.sin(x)
 
 
 def plot(data, a, eps):
@@ -17,6 +17,7 @@ def plot(data, a, eps):
         plt.title('Aproximation Taylor')
         plt.xlim(a - eps / 2, a + eps / 2)
         plt.ylim(data.min(), data.max())
+        # plt.ylim(-2, 2)
         # Asixs
         plt.plot([a - eps / 2, a + eps / 2], [0, 0], 'k-', lw=1)
         plt.plot([0, 0], [data.min(), data.max()], 'k-', lw=1)
@@ -35,14 +36,14 @@ def plot(data, a, eps):
 def taylor(derivative, a):
     for i in range(2, derivative.shape[0]):
         factor = math.factorial(i - 1)
-        # deriv = math.exp(a) / factor
+        deriv = math.exp(a) / factor
         # deriv = (2 ** a) * (math.log(2) ** (i - 1)) / factor
-        deriv = math.sin(a + (math.pi * (i - 1)) / 2) / factor
+        # deriv = math.sin(a + (math.pi * (i - 1)) / 2) / factor
         for x in range(0, derivative.shape[1]):
             derivative[i][x] = derivative[i - 1][x] + deriv * ((xcord[x] - a) ** (i - 1))
 
 
-a = 0.0
+a = 1.0
 eps = 5.0
 point_num = 100
 der_num = 51

@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "Utility.h"
+#include "SOIL.h"
 
 using namespace std;
 
@@ -29,7 +30,8 @@ uint screenHeight = 600;
 bool captureMouse = true;
 
 // Функция, рисующая замлю
-void DrawGround() {
+void DrawGround()
+{
     // Используем шейдер для земли
     glUseProgram(groundShader);                                                  CHECK_GL_ERRORS
 
@@ -52,7 +54,8 @@ void DrawGround() {
 }
 
 // Обновление смещения травинок
-void UpdateGrassVariance() {
+void UpdateGrassVariance()
+{
     // Генерация случайных смещений
     for (uint i = 0; i < GRASS_INSTANCES; ++i) {
         grassVarianceData[i].x = (float)rand() / RAND_MAX / 100;
@@ -68,7 +71,8 @@ void UpdateGrassVariance() {
 }
 
 // Рисование травы
-void DrawGrass() {
+void DrawGrass()
+{
     // Тут то же самое, что и в рисовании земли
     glUseProgram(grassShader);                                                   CHECK_GL_ERRORS
     GLint cameraLocation = glGetUniformLocation(grassShader, "camera");          CHECK_GL_ERRORS
@@ -83,7 +87,8 @@ void DrawGrass() {
 }
 
 // Эта функция вызывается для обновления экрана
-void RenderLayouts() {
+void RenderLayouts()
+{
     // Включение буфера глубины
     glEnable(GL_DEPTH_TEST);
     // Очистка буфера глубины и цветового буфера
@@ -95,12 +100,14 @@ void RenderLayouts() {
 }
 
 // Завершение программы
-void FinishProgram() {
+void FinishProgram()
+{
     glutDestroyWindow(glutGetWindow());
 }
 
 // Обработка события нажатия клавиши (специальные клавиши обрабатываются в функции SpecialButtons)
-void KeyboardEvents(unsigned char key, int x, int y) {
+void KeyboardEvents(unsigned char key, int x, int y)
+{
     if (key == 27) {
         FinishProgram();
     } else if (key == 'w') {
@@ -119,7 +126,8 @@ void KeyboardEvents(unsigned char key, int x, int y) {
 }
 
 // Обработка события нажатия специальных клавиш
-void SpecialButtons(int key, int x, int y) {
+void SpecialButtons(int key, int x, int y)
+{
     if (key == GLUT_KEY_RIGHT) {
         camera.rotateY(0.02);
     } else if (key == GLUT_KEY_LEFT) {
@@ -131,12 +139,14 @@ void SpecialButtons(int key, int x, int y) {
     }
 }
 
-void IdleFunc() {
+void IdleFunc()
+{
     glutPostRedisplay();
 }
 
 // Обработка события движения мыши
-void MouseMove(int x, int y) {
+void MouseMove(int x, int y)
+{
     if (captureMouse) {
         int centerX = screenWidth / 2,
             centerY = screenHeight / 2;
@@ -149,11 +159,13 @@ void MouseMove(int x, int y) {
 }
 
 // Обработка нажатия кнопки мыши
-void MouseClick(int button, int state, int x, int y) {
+void MouseClick(int button, int state, int x, int y)
+{
 }
 
 // Событие изменение размера окна
-void windowReshapeFunc(GLint newWidth, GLint newHeight) {
+void windowReshapeFunc(GLint newWidth, GLint newHeight)
+{
     glViewport(0, 0, newWidth, newHeight);
     screenWidth = newWidth;
     screenHeight = newHeight;
@@ -162,7 +174,8 @@ void windowReshapeFunc(GLint newWidth, GLint newHeight) {
 }
 
 // Инициализация окна
-void InitializeGLUT(int argc, char **argv) {
+void InitializeGLUT(int argc, char **argv)
+{
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
     glutInitContextVersion(3, 0);
@@ -182,22 +195,20 @@ void InitializeGLUT(int argc, char **argv) {
 }
 
 // Генерация позиций травинок (эту функцию вам придётся переписать)
-vector<VM::vec2> GenerateGrassPositions() {
+vector<VM::vec2> GenerateGrassPositions()
+{
     vector<VM::vec2> grassPositions(GRASS_INSTANCES);
-    for (uint i = 0; i < GRASS_INSTANCES; ++i) {
-        //grassPositions[i] = VM::vec2((i % 4) / 4.0, (i / 4) / 4.0) + VM::vec2(1, 1) / 8;
+    for (uint i = 0; i < GRASS_INSTANCES; ++i)
+    {
         grassPositions[i] = VM::vec2((float)rand() / RAND_MAX, (float)rand() / RAND_MAX) ;
     }
     return grassPositions;
 }
 
-// Здесь вам нужно будет генерировать меш
-vector<VM::vec4> GenMesh(uint n) {
+// Здесь вам нужно будет генерировать меш 
+vector<VM::vec4> GenMesh(uint n) /*+++++*/
+{
     return {
-        /*VM::vec4(0, 0, 0, 1),
-        VM::vec4(1, 0, 0, 1),
-        VM::vec4(0.5, 1, 0, 1),*/
-
         // 1 tringle
         VM::vec4(0, 0, 0, 1),
         VM::vec4(1, 0, 0, 1),
@@ -222,12 +233,12 @@ vector<VM::vec4> GenMesh(uint n) {
         VM::vec4(3.0 / 20.0, 2.0 / 3.0, 0, 1),
         VM::vec4(17.0 / 20.0, 2.0 / 3.0, 0, 1),
         VM::vec4(1.0 / 2.0, 1, 0, 1),
-
     };
 }
 
 // Создание травы
-void CreateGrass() {
+void CreateGrass()
+{
     uint LOD = 1;
     // Создаём меш
     vector<VM::vec4> grassPoints = GenMesh(LOD);
@@ -300,7 +311,8 @@ void CreateGrass() {
 }
 
 // Создаём камеру (Если шаблонная камера вам не нравится, то можете переделать, но я бы не стал)
-void CreateCamera() {
+void CreateCamera()
+{
     camera.angle = 45.0f / 180.0f * M_PI;
     camera.direction = VM::vec3(0, 0.3, -1);
     camera.position = VM::vec3(0.5, 0.2, 0);
@@ -311,7 +323,20 @@ void CreateCamera() {
 }
 
 // Создаём замлю
-void CreateGround() {
+void CreateGround()
+{
+    /*//Текстура
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    int width = 0, height = 0;
+
+    unsigned char *image = SOIL_load_image("Texture/ground.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    SOIL_free_image_data(image);
+    glBindTexture(GL_TEXTURE_2D, 0);*/
     // Земля состоит из двух треугольников
     vector<VM::vec4> meshPoints = {
         VM::vec4(0, 0, 0, 1),

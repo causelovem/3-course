@@ -14,7 +14,13 @@ def func(x):
     # return (x ** 3 + 4 * (x ** 2) + 7)
     # return math.exp(- 1 / (x ** 2))
     # return math.sin(1 / x)
-    return math.sin(math.log(math.fabs(x)))
+    # return math.sin(math.log(math.fabs(x)))
+    # return math.exp(x) * (1 / (x - 5))
+
+    if (x < 0):
+        return -1
+    else:
+        return 1
 
 
 def plot(data, eps):
