@@ -12,15 +12,21 @@ GL::Camera camera;               // Мы предоставляем Вам ре�
                                  // Задача этого класса только в том чтобы обработать ввод с клавиатуры и правильно сформировать эти матрицы.
                                  // Вы можете просто пользоваться этим классом для расчёта указанных матриц.
 
-
 GLuint grassPointsCount; // Количество вершин у модели травинки
 GLuint grassShader;      // Шейдер, рисующий траву
 GLuint grassVAO;         // VAO для травы (что такое VAO почитайте в доках)
 GLuint grassVariance;    // Буфер для смещения координат травинок
 vector<VM::vec4> grassVarianceData(GRASS_INSTANCES); // Вектор со смещениями для координат травинок
+vector<VM::vec2> grassParamsData(GRASS_INSTANCES);
 
 GLuint groundShader; // Шейдер для земли
 GLuint groundVAO; // VAO для земли
+
+int ground_x = 1, ground_z = 1;
+
+
+GLuint ground_texture;
+GLuint grass_texture;
 
 // Размеры экрана
 uint screenWidth = 800;
@@ -35,6 +41,10 @@ void DrawGround()
     // Используем шейдер для земли
     glUseProgram(groundShader);                                                  CHECK_GL_ERRORS
 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, ground_texture);
+    glUniform1i(glGetUniformLocation(groundShader, "point"), 0);
+    //glUniform1i(groundShader, 0);
     // Устанавливаем юниформ для шейдера. В данном случае передадим перспективную матрицу камеры
     // Находим локацию юниформа 'camera' в шейдере
     GLint cameraLocation = glGetUniformLocation(groundShader, "camera");         CHECK_GL_ERRORS
@@ -57,10 +67,10 @@ void DrawGround()
 void UpdateGrassVariance()
 {
     // Генерация случайных смещений
-    for (uint i = 0; i < GRASS_INSTANCES; ++i) {
+    /*for (uint i = 0; i < GRASS_INSTANCES; ++i) {
         grassVarianceData[i].x = (float)rand() / RAND_MAX / 100;
         grassVarianceData[i].z = (float)rand() / RAND_MAX / 100;
-    }
+    }*/
 
     // Привязываем буфер, содержащий смещения
     glBindBuffer(GL_ARRAY_BUFFER, grassVariance);                                CHECK_GL_ERRORS
@@ -75,6 +85,11 @@ void DrawGrass()
 {
     // Тут то же самое, что и в рисовании земли
     glUseProgram(grassShader);                                                   CHECK_GL_ERRORS
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, grass_texture);
+    glUniform1i(glGetUniformLocation(grassShader, "point"), 0);
+
     GLint cameraLocation = glGetUniformLocation(grassShader, "camera");          CHECK_GL_ERRORS
     glUniformMatrix4fv(cameraLocation, 1, GL_TRUE, camera.getMatrix().data().data()); CHECK_GL_ERRORS
     glBindVertexArray(grassVAO);                                                 CHECK_GL_ERRORS
@@ -200,7 +215,8 @@ vector<VM::vec2> GenerateGrassPositions()
     vector<VM::vec2> grassPositions(GRASS_INSTANCES);
     for (uint i = 0; i < GRASS_INSTANCES; ++i)
     {
-        grassPositions[i] = VM::vec2((float)rand() / RAND_MAX, (float)rand() / RAND_MAX) ;
+        grassPositions[i] = VM::vec2((float)rand() * ground_x / RAND_MAX, (float)rand() * ground_z / RAND_MAX);
+        grassParamsData[i] = VM::vec2((float)i, float(float(rand() % 4 + 9) / 100.0));
     }
     return grassPositions;
 }
@@ -239,6 +255,20 @@ vector<VM::vec4> GenMesh(uint n) /*+++++*/
 // Создание травы
 void CreateGrass()
 {
+    //Текстура
+    grass_texture = SOIL_load_OGL_texture("../Texture/grass.jpg",
+    SOIL_LOAD_AUTO,
+    SOIL_CREATE_NEW_ID,
+    SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT
+    );
+
+    glBindTexture(GL_TEXTURE_2D, grass_texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);                CHECK_GL_ERRORS
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);                CHECK_GL_ERRORS
+    // Set texture filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);            CHECK_GL_ERRORS
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);            CHECK_GL_ERRORS
+
     uint LOD = 1;
     // Создаём меш
     vector<VM::vec4> grassPoints = GenMesh(LOD);
@@ -304,6 +334,17 @@ void CreateGrass()
     glVertexAttribPointer(varianceLocation, 4, GL_FLOAT, GL_FALSE, 0, 0);        CHECK_GL_ERRORS
     glVertexAttribDivisor(varianceLocation, 1);                                  CHECK_GL_ERRORS
 
+    // Создаём буфер для поворота и высоты травинок
+    GLuint paramsBuffer;
+    glGenBuffers(1, &paramsBuffer);                                              CHECK_GL_ERRORS
+    glBindBuffer(GL_ARRAY_BUFFER, paramsBuffer);                                 CHECK_GL_ERRORS
+    glBufferData(GL_ARRAY_BUFFER, sizeof(VM::vec2) * GRASS_INSTANCES, grassParamsData.data(), GL_STATIC_DRAW); CHECK_GL_ERRORS
+
+    GLuint paramsLocation = glGetAttribLocation(grassShader, "params");          CHECK_GL_ERRORS
+    glEnableVertexAttribArray(paramsLocation);                                   CHECK_GL_ERRORS
+    glVertexAttribPointer(paramsLocation, 2, GL_FLOAT, GL_FALSE, 0, 0);          CHECK_GL_ERRORS
+    glVertexAttribDivisor(paramsLocation, 1);                                    CHECK_GL_ERRORS
+
     // Отвязываем VAO
     glBindVertexArray(0);                                                        CHECK_GL_ERRORS
     // Отвязываем буфер
@@ -325,26 +366,28 @@ void CreateCamera()
 // Создаём замлю
 void CreateGround()
 {
-    /*//Текстура
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    //Текстура
+    ground_texture = SOIL_load_OGL_texture("../Texture/ground.jpg",
+    SOIL_LOAD_AUTO,
+    SOIL_CREATE_NEW_ID,
+    SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT
+    );
 
-    int width = 0, height = 0;
-
-    unsigned char *image = SOIL_load_image("Texture/ground.jpg", &width, &height, 0, SOIL_LOAD_RGB);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    SOIL_free_image_data(image);
-    glBindTexture(GL_TEXTURE_2D, 0);*/
+    glBindTexture(GL_TEXTURE_2D, ground_texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);                CHECK_GL_ERRORS
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);                CHECK_GL_ERRORS
+    // Set texture filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);            CHECK_GL_ERRORS
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);            CHECK_GL_ERRORS
+    
     // Земля состоит из двух треугольников
     vector<VM::vec4> meshPoints = {
         VM::vec4(0, 0, 0, 1),
-        VM::vec4(1, 0, 0, 1),
-        VM::vec4(1, 0, 1, 1),
+        VM::vec4(ground_x, 0, 0, 1),
+        VM::vec4(ground_x, 0, ground_z, 1),
         VM::vec4(0, 0, 0, 1),
-        VM::vec4(1, 0, 1, 1),
-        VM::vec4(0, 0, 1, 1),
+        VM::vec4(ground_x, 0, ground_z, 1),
+        VM::vec4(0, 0, ground_z, 1),
     };
 
     // Подробнее о том, как это работает читайте в функции CreateGrass
@@ -369,6 +412,8 @@ void CreateGround()
 
 int main(int argc, char **argv)
 {
+    srand(time(0));
+
     putenv("MESA_GL_VERSION_OVERRIDE=3.3COMPAT");
     try {
         cout << "Start" << endl;
