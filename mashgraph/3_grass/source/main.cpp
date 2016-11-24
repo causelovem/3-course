@@ -222,7 +222,7 @@ vector<VM::vec2> GenerateGrassPositions()
 }
 
 // Здесь вам нужно будет генерировать меш 
-vector<VM::vec4> GenMesh(uint n) /*+++++*/
+vector<VM::vec4> GenMesh(uint n)
 {
     return {
         // 1 tringle

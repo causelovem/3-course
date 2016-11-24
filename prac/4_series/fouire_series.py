@@ -26,7 +26,7 @@ def func(x):
 def plot(data, eps):
     plt.figure()
     plt.ion()
-    cords = np.arange(-eps, eps, 2 * eps / data.shape[1])
+    coords = np.arange(-eps, eps, 2 * eps / data.shape[1])
     for i in range(data.shape[0]):
         plt.title('Aproximation Fouire')
         plt.xlim(-eps, eps)
@@ -35,9 +35,9 @@ def plot(data, eps):
         plt.plot([-eps, eps], [0, 0], 'k-', lw=1)
         plt.plot([0, 0], [data.min(), data.max()], 'k-', lw=1)
         # Func
-        plt.plot(cords, data[0])
+        plt.plot(coords, data[0])
         # Aprox
-        plt.plot(cords, data[i])
+        plt.plot(coords, data[i])
         plt.grid(True)
         plt.pause(0.5)
         plt.clf()
