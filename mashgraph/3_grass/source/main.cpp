@@ -19,6 +19,10 @@ GLuint grassVariance;    // Буфер для смещения координа�
 vector<VM::vec4> grassVarianceData(GRASS_INSTANCES); // Вектор со смещениями для координат травинок
 vector<VM::vec2> grassParamsData(GRASS_INSTANCES);
 
+float wind_force = 0.1, tau = 0.0, k = 5.0;
+
+VM::vec4 variance_vec = VM::vec4(0.0, 0.0, 0.0, 0.0);
+
 GLuint groundShader; // Шейдер для земли
 GLuint groundVAO; // VAO для земли
 
@@ -71,6 +75,23 @@ void UpdateGrassVariance()
         grassVarianceData[i].x = (float)rand() / RAND_MAX / 100;
         grassVarianceData[i].z = (float)rand() / RAND_MAX / 100;
     }*/
+    tau += 0.01;
+
+    for (uint i = 0; i < GRASS_INSTANCES / 2; ++i)
+    {
+        grassVarianceData[i].x = wind_force / k * (1 - cos(sqrt(k) * tau));
+        grassVarianceData[i].z = wind_force / k * (1 - cos(sqrt(k) * tau));
+
+        grassVarianceData[GRASS_INSTANCES / 2 + i].x = wind_force / k * (1 - cos(sqrt(k) * tau + 1));
+        grassVarianceData[GRASS_INSTANCES / 2 + i].z = wind_force / k * (1 - cos(sqrt(k) * tau + 1));
+    }
+    
+    /*X.. + kx = w_f*/
+    /*tau += 0.01;
+
+    variance_vec.x = wind_force / k * (1 - cos(sqrt(k) * tau));
+    //variance_vec.y = -wind_force / k * (1 - cos(sqrt(k) * tau));
+    variance_vec.z = wind_force / k * (1 - cos(sqrt(k) * tau));*/
 
     // Привязываем буфер, содержащий смещения
     glBindBuffer(GL_ARRAY_BUFFER, grassVariance);                                CHECK_GL_ERRORS
@@ -92,6 +113,15 @@ void DrawGrass()
 
     GLint cameraLocation = glGetUniformLocation(grassShader, "camera");          CHECK_GL_ERRORS
     glUniformMatrix4fv(cameraLocation, 1, GL_TRUE, camera.getMatrix().data().data()); CHECK_GL_ERRORS
+
+    GLfloat var_vec[4];
+    var_vec[0] = variance_vec.x;
+    var_vec[1] = variance_vec.y;
+    var_vec[2] = variance_vec.z;
+    var_vec[3] = 0.0;
+    GLint variance_wind = glGetUniformLocation(grassShader, "variance_wind");    CHECK_GL_ERRORS
+    glUniform4fv(variance_wind, 1, var_vec);                                     CHECK_GL_ERRORS
+
     glBindVertexArray(grassVAO);                                                 CHECK_GL_ERRORS
     // Обновляем смещения для травы
     UpdateGrassVariance();
@@ -216,8 +246,9 @@ vector<VM::vec2> GenerateGrassPositions()
     for (uint i = 0; i < GRASS_INSTANCES; ++i)
     {
         grassPositions[i] = VM::vec2((float)rand() * ground_x / RAND_MAX, (float)rand() * ground_z / RAND_MAX);
-        grassParamsData[i] = VM::vec2((float)i, float(float(rand() % 4 + 9) / 100.0));
+        grassParamsData[i] = VM::vec2((float)i, float(float(rand() % 8 + 5) / 100.0));
     }
+
     return grassPositions;
 }
 
@@ -325,8 +356,8 @@ void CreateGrass()
     glVertexAttribDivisor(positionLocation, 1);                                  CHECK_GL_ERRORS
 
     // Создаём буфер для смещения травинок
-    glGenBuffers(1, &grassVariance);                                            CHECK_GL_ERRORS
-    glBindBuffer(GL_ARRAY_BUFFER, grassVariance);                               CHECK_GL_ERRORS
+    glGenBuffers(1, &grassVariance);                                             CHECK_GL_ERRORS
+    glBindBuffer(GL_ARRAY_BUFFER, grassVariance);                                CHECK_GL_ERRORS
     glBufferData(GL_ARRAY_BUFFER, sizeof(VM::vec4) * GRASS_INSTANCES, grassVarianceData.data(), GL_STATIC_DRAW); CHECK_GL_ERRORS
 
     GLuint varianceLocation = glGetAttribLocation(grassShader, "variance");      CHECK_GL_ERRORS
@@ -413,6 +444,8 @@ void CreateGround()
 int main(int argc, char **argv)
 {
     srand(time(0));
+
+    //wind_force = (uint)rand() % 5;
 
     putenv("MESA_GL_VERSION_OVERRIDE=3.3COMPAT");
     try {

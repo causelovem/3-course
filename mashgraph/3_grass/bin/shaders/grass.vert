@@ -3,11 +3,12 @@
 in vec4 point;
 in vec2 position;
 in vec4 variance;
-in vec2 params; // 0 - rot, 1 - height
+in vec2 params; // x - rot, y - height
 
 out vec2 TexCoord;
 
 uniform mat4 camera;
+uniform vec4 variance_wind;
 
 void main() {
     mat4 scaleMatrix = mat4(1.0);
@@ -26,6 +27,7 @@ void main() {
     rotMatrix[2][0] = -sin(params.x);
     rotMatrix[2][2] = cos(params.x);
 
-	gl_Position = camera * (positionMatrix * rotMatrix * scaleMatrix * point + variance * point.y);
+	gl_Position = camera * (positionMatrix * rotMatrix * scaleMatrix * point + variance * point.y * point.y);
+	//gl_Position = camera * (positionMatrix * rotMatrix * scaleMatrix * point + variance_wind * point.y * point.y);
     TexCoord = vec2(point.x, point.y);
 }
