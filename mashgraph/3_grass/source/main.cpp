@@ -19,7 +19,7 @@ GLuint grassVariance;    // Буфер для смещения координа�
 vector<VM::vec4> grassVarianceData(GRASS_INSTANCES); // Вектор со смещениями для координат травинок
 vector<VM::vec2> grassParamsData(GRASS_INSTANCES);
 
-float wind_force = 0.1, tau = 0.0, k = 5.0;
+float wind_force = 0.2, tau = 0.0, k = 5.0;
 
 VM::vec4 variance_vec = VM::vec4(0.0, 0.0, 0.0, 0.0);
 
@@ -28,9 +28,11 @@ GLuint groundVAO; // VAO для земли
 
 int ground_x = 1, ground_z = 1;
 
-
 GLuint ground_texture;
 GLuint grass_texture;
+GLuint stone_texture;
+GLuint stoneShader;
+GLuint stoneVAO;
 
 // Размеры экрана
 uint screenWidth = 800;
@@ -67,14 +69,38 @@ void DrawGround()
     glUseProgram(0);                                                             CHECK_GL_ERRORS
 }
 
+// Функция, рисующая замлю
+void DrawStone()
+{
+    // Используем шейдер для земли
+    glUseProgram(stoneShader);                                                  CHECK_GL_ERRORS
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, stone_texture);
+    glUniform1i(glGetUniformLocation(stoneShader, "point"), 0);
+    //glUniform1i(stoneShader, 0);
+    // Устанавливаем юниформ для шейдера. В данном случае передадим перспективную матрицу камеры
+    // Находим локацию юниформа 'camera' в шейдере
+    GLint cameraLocation = glGetUniformLocation(stoneShader, "camera");         CHECK_GL_ERRORS
+    // Устанавливаем юниформ (загружаем на GPU матрицу проекции?)                                                     // ###
+    glUniformMatrix4fv(cameraLocation, 1, GL_TRUE, camera.getMatrix().data().data()); CHECK_GL_ERRORS
+
+    // Подключаем VAO, который содержит буферы, необходимые для отрисовки земли
+    glBindVertexArray(stoneVAO);                                                CHECK_GL_ERRORS
+
+    // Рисуем землю: 2 треугольника (6 вершин)
+    glDrawArrays(GL_TRIANGLES, 0, 36);                                            CHECK_GL_ERRORS
+
+    // Отсоединяем VAO
+    glBindVertexArray(0);                                                        CHECK_GL_ERRORS
+    // Отключаем шейдер
+    glUseProgram(0);                                                             CHECK_GL_ERRORS
+}
+
 // Обновление смещения травинок
 void UpdateGrassVariance()
 {
     // Генерация случайных смещений
-    /*for (uint i = 0; i < GRASS_INSTANCES; ++i) {
-        grassVarianceData[i].x = (float)rand() / RAND_MAX / 100;
-        grassVarianceData[i].z = (float)rand() / RAND_MAX / 100;
-    }*/
     tau += 0.01;
 
     for (uint i = 0; i < GRASS_INSTANCES / 2; ++i)
@@ -82,8 +108,8 @@ void UpdateGrassVariance()
         grassVarianceData[i].x = wind_force / k * (1 - cos(sqrt(k) * tau));
         grassVarianceData[i].z = wind_force / k * (1 - cos(sqrt(k) * tau));
 
-        grassVarianceData[GRASS_INSTANCES / 2 + i].x = wind_force / k * (1 - cos(sqrt(k) * tau + 1));
-        grassVarianceData[GRASS_INSTANCES / 2 + i].z = wind_force / k * (1 - cos(sqrt(k) * tau + 1));
+        grassVarianceData[GRASS_INSTANCES / 2 + i].x = wind_force / k * (1 - cos(sqrt(k) * tau + 0.5));
+        grassVarianceData[GRASS_INSTANCES / 2 + i].z = wind_force / k * (1 - cos(sqrt(k) * tau + 0.5));
     }
     
     /*X.. + kx = w_f*/
@@ -136,11 +162,14 @@ void RenderLayouts()
 {
     // Включение буфера глубины
     glEnable(GL_DEPTH_TEST);
+    //glClearColor(135.0 / 255.0, 206.0 / 255.0, 235.0 / 255.0, 0.0);
+    glClearColor(0.0 / 255.0, 191.0 / 255.0, 255.0 / 255.0, 0.0);
     // Очистка буфера глубины и цветового буфера
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Рисуем меши
     DrawGround();
     DrawGrass();  
+    //DrawStone();
     glutSwapBuffers();
 }
 
@@ -441,6 +470,95 @@ void CreateGround()
     glBindBuffer(GL_ARRAY_BUFFER, 0);                                            CHECK_GL_ERRORS
 }
 
+// Создаём камень
+void CreateStone()
+{
+    //Текстура
+    stone_texture = SOIL_load_OGL_texture("../Texture/stone.jpg",
+    SOIL_LOAD_AUTO,
+    SOIL_CREATE_NEW_ID,
+    SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT
+    );
+
+    glBindTexture(GL_TEXTURE_2D, stone_texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);                CHECK_GL_ERRORS
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);                CHECK_GL_ERRORS
+    // Set texture filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);            CHECK_GL_ERRORS
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);            CHECK_GL_ERRORS
+    
+    // Земля состоит из двух треугольников
+    vector<VM::vec4> meshPoints =
+    {
+        VM::vec4(0, 0, 0, 1),
+        VM::vec4(0.5, 0, 0.1, 1),
+        VM::vec4(0.5, 0, 0, 1),
+
+        VM::vec4(0, 0, 0, 1),
+        VM::vec4(0, 0, 0.1, 1),
+        VM::vec4(0.5, 0, 0.1, 1),
+
+        VM::vec4(0, 0, 0, 1),
+        VM::vec4(0.5, 0.1, 0, 1),
+        VM::vec4(0.5, 0, 0, 1),
+
+        VM::vec4(0, 0, 0, 1),
+        VM::vec4(0, 0.1, 0, 1),
+        VM::vec4(0.5, 0.1, 0, 1),
+
+        VM::vec4(0, 0, 0, 1),
+        VM::vec4(0, 0.1, 0, 1),
+        VM::vec4(0, 0.1, 0.1, 1),
+
+        VM::vec4(0, 0, 0, 1),
+        VM::vec4(0, 0.1, 0.1, 1),
+        VM::vec4(0, 0, 0.1, 1),
+
+        VM::vec4(0.5, 0, 0, 1),
+        VM::vec4(0.5, 0.1, 0, 1),
+        VM::vec4(0.5, 0.1, 0.1, 1),
+
+        VM::vec4(0.5, 0, 0, 1),
+        VM::vec4(0.5, 0.1, 0.1, 1),
+        VM::vec4(0.5, 0, 0.1, 1),
+
+        VM::vec4(0, 0, 0.1, 1),
+        VM::vec4(0.5, 0.1, 0.1, 1),
+        VM::vec4(0.5, 0, 0.1, 1),
+
+        VM::vec4(0, 0, 0.1, 1),
+        VM::vec4(0, 0.1, 0.1, 1),
+        VM::vec4(0.5, 0.1, 0.1, 1),
+
+        VM::vec4(0, 0.1, 0, 1),
+        VM::vec4(0.5, 0.1, 1, 1),
+        VM::vec4(0.5, 0.1, 0, 1),
+
+        VM::vec4(0, 0.1, 0, 1),
+        VM::vec4(0, 0.1, 0.1, 1),
+        VM::vec4(0.5, 0.1, 0.1, 1),
+    };
+
+    // Подробнее о том, как это работает читайте в функции CreateGrass
+
+    stoneShader = GL::CompileShaderProgram("stone");
+
+    GLuint pointsBuffer;
+    glGenBuffers(1, &pointsBuffer);                                              CHECK_GL_ERRORS
+    glBindBuffer(GL_ARRAY_BUFFER, pointsBuffer);                                 CHECK_GL_ERRORS
+    glBufferData(GL_ARRAY_BUFFER, sizeof(VM::vec4) * meshPoints.size(), meshPoints.data(), GL_STATIC_DRAW); CHECK_GL_ERRORS
+
+    glGenVertexArrays(1, &stoneVAO);                                            CHECK_GL_ERRORS
+    glBindVertexArray(stoneVAO);                                                CHECK_GL_ERRORS
+
+    GLuint index = glGetAttribLocation(stoneShader, "point");                   CHECK_GL_ERRORS
+    glEnableVertexAttribArray(index);                                            CHECK_GL_ERRORS
+    glVertexAttribPointer(index, 4, GL_FLOAT, GL_FALSE, 0, 0);                   CHECK_GL_ERRORS
+
+    glBindVertexArray(0);                                                        CHECK_GL_ERRORS
+    glBindBuffer(GL_ARRAY_BUFFER, 0);                                            CHECK_GL_ERRORS
+}
+
 int main(int argc, char **argv)
 {
     srand(time(0));
@@ -460,6 +578,7 @@ int main(int argc, char **argv)
         cout << "Grass created" << endl;
         CreateGround();
         cout << "Ground created" << endl;
+        //CreateStone();
         glutMainLoop();
     } catch (string s) {
         cout << s << endl;
