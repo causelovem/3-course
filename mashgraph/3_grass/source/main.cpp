@@ -19,7 +19,7 @@ GLuint grassVariance;    // Буфер для смещения координа�
 vector<VM::vec4> grassVarianceData(GRASS_INSTANCES); // Вектор со смещениями для координат травинок
 vector<VM::vec2> grassParamsData(GRASS_INSTANCES);
 
-float wind_forceX = 0.1, wind_forceZ = 0.1, tau = 0.0, k = 5.0;
+float wind_forceX = 0.05, wind_forceZ = 0.05, tau = 0.0, k = 5.0;
 
 GLuint groundShader; // Шейдер для земли
 GLuint groundVAO; // VAO для земли
@@ -75,10 +75,12 @@ void UpdateGrassVariance()
     {
         grassVarianceData[i].x = wind_forceX / k * (1 - cos(sqrt(k) * tau));
         grassVarianceData[i].z = wind_forceZ / k * (1 - cos(sqrt(k) * tau));
-        grassVarianceData[i].y = - sqrt(grassVarianceData[i].x * grassVarianceData[i].x + grassVarianceData[i].z * grassVarianceData[i].z);
+        //grassVarianceData[i].y = - wind_forceZ / k * (1 - cos(sqrt(k) * tau));
+        grassVarianceData[i].y = - sqrt(grassVarianceData[i].x *  grassVarianceData[i].x + grassVarianceData[i].z * grassVarianceData[i].z);
 
-        grassVarianceData[GRASS_INSTANCES / 2 + i].x = wind_forceX / k * (1 - cos(sqrt(k) * tau + 0.7));
-        grassVarianceData[GRASS_INSTANCES / 2 + i].z = wind_forceZ / k * (1 - cos(sqrt(k) * tau + 0.7));
+        grassVarianceData[GRASS_INSTANCES / 2 + i].x = wind_forceX / k * (1 - cos(sqrt(k) * tau + 1));
+        grassVarianceData[GRASS_INSTANCES / 2 + i].z = wind_forceZ / k * (1 - cos(sqrt(k) * tau + 1));
+        //grassVarianceData[GRASS_INSTANCES / 2 + i].y = - wind_forceZ / k * (1 - cos(sqrt(k) * tau + 1));
         grassVarianceData[GRASS_INSTANCES / 2 + i].y = - sqrt(grassVarianceData[GRASS_INSTANCES / 2 + i].x * grassVarianceData[GRASS_INSTANCES / 2 + i].x + grassVarianceData[GRASS_INSTANCES / 2 + i].z * grassVarianceData[GRASS_INSTANCES / 2 + i].z);
     }
 
@@ -124,7 +126,6 @@ void RenderLayouts()
     // Рисуем меши
     DrawGround();
     DrawGrass();  
-    //DrawStone();
     glutSwapBuffers();
 }
 
@@ -282,7 +283,7 @@ vector<VM::vec4> GenMesh(uint n)
         VM::vec4(1, 1.0 / 4.0, 0, 1),
         VM::vec4(90.0 / 100.0, 2.0 / 4.0, 0, 1),
 
-        // 4 tringle
+        // 4 tringle 
         VM::vec4(0, 1.0 / 4.0, 0, 1),
         VM::vec4(10.0 / 100.0, 2.0 / 4.0, 0, 1),
         VM::vec4(90.0 / 100.0, 2.0 / 4.0, 0, 1),
