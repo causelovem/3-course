@@ -65,7 +65,7 @@ def plot(data, xcord, ycord):
         plt.ylim(-ycord, ycord)
         plt.title('Temperature_changes')
         plt.grid(True)
-        plt.pause(0.1)
+        plt.pause(0.01)
         plt.clf()
     plt.show(block=True)
     return
@@ -80,8 +80,8 @@ num = float(100)
 dist = float((50.0 - 0.0) / num)
 print "DIST"
 print dist
-a = float(1000)
-t = float(0.01)
+a = float(100)
+t = float(0.1)
 fin = 10
 dist = dist ** 2
 

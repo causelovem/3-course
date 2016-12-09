@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
             return -1;
         }
 
+        cout << ">Number of proc = " << nProc << endl;
+
         std::vector < std::vector<double> > matrixA;
 
         double num;
@@ -62,6 +64,7 @@ int main(int argc, char *argv[])
 
         fileA >> row;
         fileA >> col;
+        cout << ">MatrixA size = " << row << "x" << col << endl;
         for (uint i = 0; i < row; i++)
         {
             for (uint j = 0; j < col; j++)
@@ -78,6 +81,7 @@ int main(int argc, char *argv[])
 
         fileB >> col;
         std::vector < double > matrixB(col);
+        cout << ">MatrixB size = " << col << endl;
 
         for (uint i = 0; i < col; i++)
             fileB >> matrixB[i];
@@ -92,15 +96,36 @@ int main(int argc, char *argv[])
             return -1;
         }
 
-        if (nProc > row)
+        if (nProc == 1)
         {
-            cerr << ">Can not parallel prog." << endl;
+            float time = (float)clock();
+
+            int res_count = 0;
+            for (uint i = 0; i < row; i++)
+            {
+                double res = 0;
+                for (uint j = 0; j < col; j++)
+                    res += matrixA[i][j] * matrixB[j];
+                result[res_count++] = res;
+            }
+
+            cout << ">Time of computation = " << ((float)clock() - time) / CLOCKS_PER_SEC << endl;
+
+            fileC << row << "\n";
+            for (uint i = 0; i < row; i++)
+                fileC << result[i] << " ";
+
             fileA.close();
             fileB.close();
             fileC.close();
             MPI_Finalize();
-            return -1;
+            return 0;
         }
+
+        if (nProc > row)
+            nProc = row;
+
+        float time = (float)clock();
 
         int div = row / nProc;
         int check = row % nProc;
@@ -110,6 +135,8 @@ int main(int argc, char *argv[])
 
         for (uint i = 0; i < col; i++)
             vectorB[i] = matrixB[i];
+
+        MPI_Bcast(&nProc, 1, MPI_INT, root, MPI_COMM_WORLD);
 
         MPI_Bcast(&col, 1, MPI_UNSIGNED, root, MPI_COMM_WORLD);
         MPI_Bcast(vectorB, col, MPI_DOUBLE, root, MPI_COMM_WORLD);
@@ -163,6 +190,8 @@ int main(int argc, char *argv[])
         for (uint j = 0; j < send_val; j++)
             result[res_count++] = send_vec[j];
 
+        cout << ">Time of computation = " << ((float)clock() - time) / CLOCKS_PER_SEC << endl;
+
         fileC << row << "\n";
         for (uint i = 0; i < row; i++)
             fileC << result[i] << " ";
@@ -177,39 +206,45 @@ int main(int argc, char *argv[])
     }
     else
     {
-        uint col;
-        MPI_Bcast(&col, 1, MPI_UNSIGNED, root, MPI_COMM_WORLD);
-        double *matrixB = new double [col];
-        MPI_Bcast(matrixB, col, MPI_DOUBLE, root, MPI_COMM_WORLD);
+        int proc_new;
+        MPI_Bcast(&proc_new, 1, MPI_INT, root, MPI_COMM_WORLD);
 
-        int div;
-        MPI_Recv(&div, 1, MPI_INT, root, tag, MPI_COMM_WORLD, &status);
-
-        double *res = new double [div];
-        double **tmp = new double* [div];
-
-        for (uint i = 0; i < div; i++)
+        if (proc_new - 1 >= myRank)
         {
-            tmp[i] = new double [col];
-            MPI_Recv(tmp[i], col, MPI_DOUBLE, root, tag, MPI_COMM_WORLD, &status);
+            uint col;
+            MPI_Bcast(&col, 1, MPI_UNSIGNED, root, MPI_COMM_WORLD);
+            double *matrixB = new double [col];
+            MPI_Bcast(matrixB, col, MPI_DOUBLE, root, MPI_COMM_WORLD);
+
+            int div;
+            MPI_Recv(&div, 1, MPI_INT, root, tag, MPI_COMM_WORLD, &status);
+
+            double *res = new double [div];
+            double **tmp = new double* [div];
+
+            for (uint i = 0; i < div; i++)
+            {
+                tmp[i] = new double [col];
+                MPI_Recv(tmp[i], col, MPI_DOUBLE, root, tag, MPI_COMM_WORLD, &status);
+            }
+
+            for (uint i = 0; i < div; i++)
+                res[i] = 0;
+
+            for (uint i = 0; i < div; i++)
+                for (uint j = 0; j < col; j++)
+                    res[i] += tmp[i][j] * matrixB[j];
+
+            MPI_Send(res, div, MPI_DOUBLE, root, tag, MPI_COMM_WORLD);
+
+            delete [] matrixB;
+            delete [] res;
+
+            for (uint i = 0; i < div; i++)
+                delete [] tmp[i];
+
+            delete [] tmp;
         }
-
-        for (uint i = 0; i < div; i++)
-            res[i] = 0;
-
-        for (uint i = 0; i < div; i++)
-            for (uint j = 0; j < col; j++)
-                res[i] += tmp[i][j] * matrixB[j];
-
-        MPI_Send(res, div, MPI_DOUBLE, root, tag, MPI_COMM_WORLD);
-
-        delete [] matrixB;
-        delete [] res;
-
-        for (uint i = 0; i < div; i++)
-            delete [] tmp[i];
-
-        delete [] tmp;
     }
     
     MPI_Finalize();
