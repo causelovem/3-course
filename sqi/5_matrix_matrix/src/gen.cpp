@@ -7,7 +7,7 @@ using namespace std;
  
 int main()
 {
-    ofstream matrix("matrixB_1024x4096", ios::binary);
+    ofstream matrix("matrixA_1024t", ios::binary);
     srand(time(NULL)); // Инициализируем генератор случайных чисел. 
     int n = 0, m = 0; 
     cout << ">Input matrix size (one number)." << endl;
