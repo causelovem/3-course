@@ -1,0 +1,15 @@
+# @ job_type = bluegene
+# @ class = n128_m15
+# @ output = $(jobid).out
+# @ error = $(jobid).err
+# @ wall_clock_limit = 00:15:00
+# @ bg_size = 128
+# @ queue
+
+# /bgsys/drivers/ppcfloor/bin/mpirun -np 125 -mapfile map.map /gpfs/data/edu-cmc-sqi16y3-004/5_matrix_matrix/matrix_matrix data_A/matrixA_1024 data_B/matrixB_1024 data_C/matrixC_1024
+
+# /bgsys/drivers/ppcfloor/bin/mpirun -np 125 -mapfile map.map /gpfs/data/edu-cmc-sqi16y3-004/5_matrix_matrix/matrix_matrix data_A/matrixA_2048 data_B/matrixB_2048 data_C/matrixC_2048
+
+# /bgsys/drivers/ppcfloor/bin/mpirun -np 125 -mapfile map.map /gpfs/data/edu-cmc-sqi16y3-004/5_matrix_matrix/matrix_matrix data_A/matrixA_4096 data_B/matrixB_4096 data_C/matrixC_4096
+
+/bgsys/drivers/ppcfloor/bin/mpirun -np 125 -mapfile map.map /gpfs/data/edu-cmc-sqi16y3-004/5_matrix_matrix/matrix_matrix data_A/matrixA_8192 data_B/matrixB_8192 data_C/matrixC_8192

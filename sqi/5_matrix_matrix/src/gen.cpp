@@ -5,13 +5,14 @@
  
 using namespace std;
  
-int main()
+int main(int argc, char *argv[])
 {
-    ofstream matrix("matrixA_1024t", ios::binary);
+    ofstream matrix(argv[1], ios::binary);
     srand(time(NULL)); // Инициализируем генератор случайных чисел. 
     int n = 0, m = 0; 
-    cout << ">Input matrix size (one number)." << endl;
-    cin >> n; // Считываем с клавиатуры n строки
+    //cout << ">Input matrix size (one number)." << endl;
+    //cin >> n; // Считываем с клавиатуры n строки
+    n = atoi(argv[2]);
     //cin >> m; // Считываем с клавиатуры m столбцы
     //matrix << n << " " << m << endl;
     matrix.write((char *)&n, sizeof(n));

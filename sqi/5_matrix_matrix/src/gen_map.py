@@ -6,13 +6,13 @@ rand.seed()
 
 flag = 1
 
-num_str = 512
+num_str = 125
 map = np.zeros((num_str, 4))
 
 for i in range(0, num_str):
     flag = 1
-    map[i][0] = int(rand.randint(0, 7))
-    map[i][1] = int(rand.randint(0, 7))
+    map[i][0] = int(rand.randint(0, 3))
+    map[i][1] = int(rand.randint(0, 3))
     map[i][2] = int(rand.randint(0, 7))
     while (flag == 1):
         flag = 0
@@ -22,11 +22,11 @@ for i in range(0, num_str):
                 break
 
         if (flag == 1):
-            map[i][0] = int(rand.randint(0, 7))
-            map[i][1] = int(rand.randint(0, 7))
+            map[i][0] = int(rand.randint(0, 3))
+            map[i][1] = int(rand.randint(0, 3))
             map[i][2] = int(rand.randint(0, 7))
 
-file = open('yura.map', 'w')
+file = open('map.map', 'w')
 
 for i in range(num_str):
     file.write(str(int(map[i][0])))

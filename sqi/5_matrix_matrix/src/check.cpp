@@ -61,8 +61,7 @@ int main(int argc, char **argv)
 	{
 		double tmp;
 		MPI_File_read(fh_c, &tmp, 1, MPI_DOUBLE, &status);
-		cout << tmp << "   " << C[i] << endl;
-		//cout << fabs(fabs(tmp) - fabs(C[i]));
+		//cout << tmp << "   " << C[i] << endl;
 		if(fabs(fabs(tmp) - fabs(C[i])) > EPS)
 		{
 			cout << "ERRROR " << tmp << "  " << C[i] << endl;

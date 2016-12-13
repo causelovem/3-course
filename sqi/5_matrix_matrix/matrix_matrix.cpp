@@ -31,16 +31,16 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &nProc);
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
-    double sq = pow(nProc,  1.0 / 3.0);
-    int check_sq = trunc(sq);
-    if ((check_sq = pow(check_sq, 3)) != nProc)
+    double tmp = cbrtf(nProc);
+    int dim = tmp;
+    if (tmp - dim > 0.0000001)
     {
-        cout << ">Can not parallel program, because your proc number is not a 3-rd power of some N." << endl;
+        if (myRank == 0)
+            cout << ">Can not parallel program, because your proc number is not a 3-rd power of some N." << endl;
 
         MPI_Finalize();
         return -1;
     }
-    int dim = pow(nProc,  1.0 / 3.0);
 
     int k = myRank / (dim * dim),
         j = (myRank % (dim * dim)) / dim,
@@ -50,6 +50,8 @@ int main(int argc, char *argv[])
     MPI_File_open(MPI_COMM_WORLD, argv[1], MPI_MODE_RDONLY, MPI_INFO_NULL, &fileA);
     MPI_File_open(MPI_COMM_WORLD, argv[2], MPI_MODE_RDONLY, MPI_INFO_NULL, &fileB);
     MPI_File_open(MPI_COMM_WORLD, argv[3], MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &fileC);
+
+    float timeR = (float)clock();
 
     int size = 0;
     MPI_File_seek(fileA, 0, MPI_SEEK_SET);
@@ -169,10 +171,14 @@ int main(int argc, char *argv[])
     for (int l = 0; l < sizeC; l++)
         blockC[l] = 0;
 
+    float timeC = (float)clock();
+
     for (int l = 0; l < rowA; l++)
         for (int t = 0; t < colB; t++)
             for (int s = 0; s < colA; s++)
                 blockC[l * colB + t] += blockA[l * colA + s] * blockB[t + s * colB];
+
+    timeC = ((float)clock() - timeC) / CLOCKS_PER_SEC;
 
     int redRank = myRank % (dim * dim);
     int process_ranks[dim];
@@ -218,6 +224,21 @@ int main(int argc, char *argv[])
 
     if (myRank < dim * dim)
         MPI_File_write(fileC, blockR, sizeC, MPI_DOUBLE, &status);
+
+    timeR = ((float)clock() - timeR) / CLOCKS_PER_SEC;
+
+    float redtimeC = 0, redtimeR = 0;
+
+    MPI_Reduce(&timeC, &redtimeC, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&timeR, &redtimeR, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+    if (myRank == 0)
+    {
+        cout << ">Matrix size = " << size << endl;
+        cout << ">DIM = " << dim << endl;
+        cout << ">Time of computation = " << redtimeC << endl;
+        cout << ">Programm time = " << redtimeR << endl;
+    }
 
     delete [] blockA;
     delete [] blockB;
