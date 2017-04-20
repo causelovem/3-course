@@ -7,7 +7,7 @@ using namespace std;
  
 int main()
 {
-    ofstream matrix("matrixB_1024x4096");
+    ofstream matrix("matrixA_4096x4096");
     srand(time(NULL)); // Инициализируем генератор случайных чисел. 
     int n = 0, m = 0; 
     cin >> n; // Считываем с клавиатуры n строки
